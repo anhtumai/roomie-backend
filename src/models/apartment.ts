@@ -1,4 +1,4 @@
-import { Apartment, PrismaClient } from '@prisma/client'
+import { Apartment, Prisma, PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -28,7 +28,25 @@ async function createApartment(
     return newApartment
 }
 
+async function deleteApartment(adminId: number): Promise<Apartment | null> {
+    const deletedApartment = await prisma.apartment.findFirst({
+        where: {
+            adminId: adminId,
+        },
+    })
+
+    if (deletedApartment === null) return null
+
+    await prisma.apartment.delete({
+        where: {
+            id: deletedApartment.id,
+        },
+    })
+    return deletedApartment
+}
+
 export default {
     findApartment,
     createApartment,
+    deleteApartment,
 }
