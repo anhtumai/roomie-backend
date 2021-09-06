@@ -12,9 +12,7 @@ apartmentRouter.get(
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
         const apartment = await apartmentModel.findApartment(req.account.id)
-        if (apartment === null)
-            return res.status(404).json({ error: 'No apartment for this user' })
-        return res.status(200).json(apartment)
+        return res.status(200).json({ apartment })
     },
 )
 
