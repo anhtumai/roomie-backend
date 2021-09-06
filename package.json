@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/anhtumai/roomie-backend"
   },
-  "author": "Bowden Kelly",
+  "author": "Anh Tu Mai",
   "license": "MIT",
   "scripts": {
     "clean": "tsc --build --clean",
