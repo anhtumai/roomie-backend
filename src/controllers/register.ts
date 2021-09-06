@@ -1,11 +1,9 @@
 import { Router } from 'express'
 import bcrypt from 'bcrypt'
 
-import { PrismaClient } from '@prisma/client'
+import accountModel from '../models/account'
 import processClientError from '../util/error'
 import logger from '../util/logger'
-
-const prisma = new PrismaClient()
 
 const registerRouter = Router()
 
@@ -20,14 +18,14 @@ registerRouter.post('/', async (req, res, next) => {
     const passwordHash = await bcrypt.hash(body.password, saltRounds)
 
     try {
-        const newAccount = await prisma.account.create({
-            data: {
-                username: body.username,
-                name: body.name,
-                password: passwordHash,
-            },
+        const newAccount = await accountModel.createAccount(
+            body.username,
+            body.name,
+            passwordHash,
+        )
+        return res.status(201).json({
+            msg: `Create new account ${newAccount.username} with name ${newAccount.name}`,
         })
-        return res.status(201).json(newAccount)
     } catch (err) {
         logger.error(err)
         next(err)

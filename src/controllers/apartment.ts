@@ -1,12 +1,9 @@
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
 
+import apartmentModel from '../models/apartment'
 import middleware from '../util/middleware'
-
-import { RequestAfterExtractor } from '../types/express-middleware'
 import logger from '../util/logger'
-
-const prisma = new PrismaClient()
+import { RequestAfterExtractor } from '../types/express-middleware'
 
 const apartmentRouter = Router()
 
@@ -14,11 +11,7 @@ apartmentRouter.get(
     '/',
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
-        const apartment = await prisma.apartment.findFirst({
-            where: {
-                adminId: req.account.id as number,
-            },
-        })
+        const apartment = await apartmentModel.findApartment(req.account.id)
         console.log(apartment)
         return res.status(201).json(apartment)
     },
@@ -29,16 +22,10 @@ apartmentRouter.post(
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
         try {
-            const newApartment = await prisma.apartment.create({
-                data: {
-                    name: req.body.name,
-                    Admin: {
-                        connect: {
-                            id: req.account.id,
-                        },
-                    },
-                },
-            })
+            const newApartment = await apartmentModel.createApartment(
+                req.body.name,
+                req.account.id,
+            )
             return res.status(201).json(newApartment)
         } catch (err) {
             logger.error(err)

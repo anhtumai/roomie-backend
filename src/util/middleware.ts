@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-import { PrismaClient, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 
+import accountModel from '../models/account'
 import logger from './logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 
@@ -58,13 +59,12 @@ function tokenExtractor(
 }
 
 async function accountExtractor(
-    request: Request,
+    request: RequestAfterExtractor,
     response: Response,
     next: NextFunction,
 ): Promise<void> {
-    const prisma = new PrismaClient()
     try {
-        if ((request as any).token === undefined) {
+        if (request.token === undefined) {
             throw new jwt.JsonWebTokenError('Token is missing')
         }
 
@@ -75,17 +75,7 @@ async function accountExtractor(
 
         const accountId = (decodedToken as jwt.JwtPayload).id
 
-    ;(request as RequestAfterExtractor).account =
-      await prisma.account.findUnique({
-          where: {
-              id: accountId,
-          },
-          select: {
-              id: true,
-              username: true,
-              name: true,
-          },
-      })
+        request.account = await accountModel.findAccountById(accountId)
     } catch (err) {
         next(err)
     }

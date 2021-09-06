@@ -2,20 +2,15 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import { Router } from 'express'
 
-import { PrismaClient } from '.prisma/client'
-
+import accountModel from '../models/account'
 import processClientError from '../util/error'
-
-const prisma = new PrismaClient()
 
 const loginRouter = Router()
 
 loginRouter.post('/', async (req, res) => {
     const body = req.body
 
-    const account = await prisma.account.findFirst({
-        where: { username: body.username },
-    })
+    const account = await accountModel.findAccountByUsername(body.username)
     const passwordCorrect =
     account === null
         ? false
