@@ -26,7 +26,7 @@
 
 ## Apartments
 
-`/api/apartments` - **POST**
+`/api/apartment` - **POST**
 
 - Add new apartment
 - Authorization: `token`
@@ -35,7 +35,7 @@
   - code 201, `name`, `id`, `adminUsername`
   - code 400, `error`
 
-`/api/apartments` - **GET**
+`/api/apartment` - **GET**
 
 - Get apartment the person currently lives in
 - Authorization: `token`

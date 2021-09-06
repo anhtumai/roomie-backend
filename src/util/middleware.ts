@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
-import { Prisma } from '@prisma/client'
+import jwt from 'jsonwebtoken'
+import { PrismaClient, Prisma } from '@prisma/client'
 
 import logger from './logger'
+import { RequestAfterExtractor } from '../types/express-middleware'
 
 function requestLogger(
     request: Request,
@@ -29,12 +31,10 @@ function errorHandler(
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-            return response
-                .status(401)
-                .json({
-                    error:
-            'There is unique constraint violation, anew user cannot be created',
-                })
+            return response.status(401).json({
+                error:
+          'There is unique constraint violation, anew user cannot be created',
+            })
         }
     } else if (error.name === 'JsonWebTokenError') {
         return response.status(401).json({ error: 'invalid token' })
@@ -57,9 +57,45 @@ function tokenExtractor(
     next()
 }
 
+async function accountExtractor(
+    request: Request,
+    response: Response,
+    next: NextFunction,
+): Promise<void> {
+    const prisma = new PrismaClient()
+    try {
+        if ((request as any).token === undefined) {
+            throw new jwt.JsonWebTokenError('Token is missing')
+        }
+
+        const decodedToken = jwt.verify((request as any).token, process.env.SECRET)
+        if (typeof decodedToken === 'string') {
+            throw new jwt.JsonWebTokenError('Token is invalid')
+        }
+
+        const accountId = (decodedToken as jwt.JwtPayload).id
+
+    ;(request as RequestAfterExtractor).account =
+      await prisma.account.findUnique({
+          where: {
+              id: accountId,
+          },
+          select: {
+              id: true,
+              username: true,
+              name: true,
+          },
+      })
+    } catch (err) {
+        next(err)
+    }
+    next()
+}
+
 export default {
     requestLogger,
     tokenExtractor,
     unknownEndpoint,
     errorHandler,
+    accountExtractor,
 }

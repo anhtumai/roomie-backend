@@ -30,8 +30,8 @@ loginRouter.post('/', async (req, res) => {
         id: account.id,
     }
 
-    const token = jwt.sign(accountForToken, 'secret', {
-        expiresIn: '3600',
+    const token = jwt.sign(accountForToken, process.env.SECRET, {
+        expiresIn: 60 * 60,
     })
 
     res

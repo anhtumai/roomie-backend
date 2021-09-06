@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 
 import { PrismaClient } from '@prisma/client'
 import processClientError from '../util/error'
+import logger from '../util/logger'
 
 const prisma = new PrismaClient()
 
@@ -26,13 +27,9 @@ registerRouter.post('/', async (req, res, next) => {
                 password: passwordHash,
             },
         })
-        console.log(newAccount)
         return res.status(201).json(newAccount)
     } catch (err) {
-        console.log('catch this error hmmm')
-        console.log(err)
-        console.log(typeof err)
-        console.log(err.code)
+        logger.error(err)
         next(err)
     }
 })

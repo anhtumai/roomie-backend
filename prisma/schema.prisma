@@ -25,7 +25,7 @@ model Apartment {
   @@map(name: "apartment")
   id      Int     @id @default(autoincrement())
   name    String  @unique @db.VarChar(30)
-  admin   Account @relation(fields: [adminId], references: [id])
+  Admin   Account @relation(fields: [adminId], references: [id])
   adminId Int
 
   members Member[]
