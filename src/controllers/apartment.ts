@@ -11,7 +11,10 @@ apartmentRouter.get(
     '/',
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
-        const apartment = await apartmentModel.findApartment(req.account.id)
+        const apartment = await apartmentModel.findApartmentByAdminId(
+            req.account.id,
+        )
+
         return res.status(200).json({ data: apartment })
     },
 )
@@ -34,15 +37,27 @@ apartmentRouter.post(
 )
 
 apartmentRouter.delete(
-    '/',
+    '/:id',
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
+        const id = Number(req.params.id)
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'Apartment ID must be number' })
+        }
+        const { account } = req
+
         try {
-            const deletedApartment = await apartmentModel.deleteApartment(
-                req.account.id,
-            )
+            const deletedApartment = await apartmentModel.findApartmentById(id)
             if (deletedApartment === null)
-                return res.status(404).json({ error: 'No apartment for this user' })
+                return res
+                    .status(404)
+                    .json({ error: `Apartment with id ${id} doesnot exist` })
+            if (deletedApartment.adminId !== account.id) {
+                return res
+                    .status(403)
+                    .json({ error: 'User is forbidden to remove this apartment' })
+            }
+            await apartmentModel.deleteApartment(id)
             return res
                 .status(200)
                 .json({ msg: `Delete apartment ${deletedApartment.name}` })
