@@ -25,12 +25,13 @@ model Account {
 
 model Apartment {
 	@@map(name: "apartment")
-	id      Int     @id @default(autoincrement())
-	name    String	@unique @db.VarChar(30)
-	admin   Account @relation(fields: [adminId], references: [id])
-	adminId Int
+	id			Int     @id @default(autoincrement())
+	name		String	@unique @db.VarChar(30)
+	admin		Account @relation(fields: [adminId], references: [id])
+	adminId		Int
 
-  members Member[]
+	members		Member[]
+	invitations	Invitation[]
 }
 
 model Member {
@@ -44,9 +45,11 @@ model Member {
 
 model Invitation {
 	@@map(name: "invitation")
-	id			Int		@id	@default(autoincrement())
-	invitor		Account	@relation("Invitor", fields: [invitorId], references: [id])
+	id			Int			@id	@default(autoincrement())
+	invitor		Account		@relation("Invitor", fields: [invitorId], references: [id])
 	invitorId	Int
-	invitee		Account	@relation("Invitee", fields: [inviteeId], references: [id])
+	invitee		Account		@relation("Invitee", fields: [inviteeId], references: [id])
 	inviteeId	Int
+	apartment	Apartment	@relation(fields: [apartmentId], references: [id])
+	apartmentId	Int
 }
