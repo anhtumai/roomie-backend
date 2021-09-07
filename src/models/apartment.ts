@@ -18,7 +18,7 @@ async function createApartment(
     const newApartment = await prisma.apartment.create({
         data: {
             name,
-            Admin: {
+            admin: {
                 connect: {
                     id: adminId,
                 },

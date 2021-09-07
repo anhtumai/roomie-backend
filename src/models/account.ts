@@ -1,12 +1,10 @@
 import { PrismaClient, Account } from '@prisma/client'
 
+import { AccountWithoutPassword } from '../types/express-middleware'
+
 const prisma = new PrismaClient()
 
-async function findAccountById(id: number): Promise<{
-    id: number
-    username: string
-    name: string
-}> {
+async function findAccountById(id: number): Promise<AccountWithoutPassword> {
     const account = await prisma.account.findUnique({
         where: {
             id,

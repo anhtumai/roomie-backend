@@ -25,7 +25,7 @@ apartmentRouter.post(
                 req.body.name,
                 req.account.id,
             )
-            return res.status(201).json(newApartment)
+            return res.status(201).json({ apartment: newApartment })
         } catch (err) {
             logger.error(err)
             next(err)
