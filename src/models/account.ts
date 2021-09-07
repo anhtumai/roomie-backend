@@ -4,11 +4,11 @@ import { AccountWithoutPassword } from '../types/express-middleware'
 
 const prisma = new PrismaClient()
 
-async function findAccountById(id: number): Promise<AccountWithoutPassword> {
-    const account = await prisma.account.findUnique({
-        where: {
-            id,
-        },
+async function findAccountWithoutPassword(
+    findParams: Record<string, string | number>,
+): Promise<AccountWithoutPassword | null> {
+    const account = await prisma.account.findFirst({
+        where: findParams,
         select: {
             id: true,
             username: true,
@@ -18,11 +18,11 @@ async function findAccountById(id: number): Promise<AccountWithoutPassword> {
     return account
 }
 
-async function findAccountByUsername(
-    username: string,
+async function findAccount(
+    findParams: Record<string, string | number>,
 ): Promise<Account | null> {
     const account = await prisma.account.findFirst({
-        where: { username },
+        where: findParams,
     })
     return account
 }
@@ -48,7 +48,7 @@ async function createAccount(
 }
 
 export default {
-    findAccountById,
-    findAccountByUsername,
+    findAccount,
+    findAccountWithoutPassword,
     createAccount,
 }

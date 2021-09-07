@@ -67,7 +67,7 @@ apartmentRouter.delete(
             }
             await apartmentModel.deleteApartment(id)
             return res
-                .status(200)
+                .status(204)
                 .json({ msg: `Delete apartment ${deletedApartment.name}` })
         } catch (err) {
             logger.error(err)

@@ -5,7 +5,6 @@ import { Prisma } from '@prisma/client'
 import accountModel from '../models/account'
 import logger from './logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
-import { log } from 'console'
 
 function requestLogger(
     request: Request,
@@ -74,7 +73,9 @@ async function accountExtractor(
 
         const accountId = (decodedToken as jwt.JwtPayload).id
 
-        request.account = await accountModel.findAccountById(accountId)
+        request.account = await accountModel.findAccountWithoutPassword({
+            id: accountId,
+        })
     } catch (err) {
         next(err)
     }
