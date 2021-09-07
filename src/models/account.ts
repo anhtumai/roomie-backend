@@ -31,7 +31,7 @@ async function createAccount(
     username: string,
     name: string,
     passwordHash: string,
-): Promise<Account> {
+): Promise<AccountWithoutPassword> {
     const newAccount = await prisma.account.create({
         data: {
             username,
@@ -40,7 +40,11 @@ async function createAccount(
         },
     })
 
-    return newAccount
+    return {
+        id: newAccount.id,
+        username: newAccount.username,
+        name: newAccount.name,
+    }
 }
 
 export default {

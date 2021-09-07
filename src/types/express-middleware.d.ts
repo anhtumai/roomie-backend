@@ -1,6 +1,6 @@
 import { Request } from 'express'
 
-export interface AccountWithoutPassword {
+export type AccountWithoutPassword = {
     id: number
     username: string
     name: string

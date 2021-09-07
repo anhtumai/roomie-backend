@@ -12,7 +12,7 @@ apartmentRouter.get(
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
         const apartment = await apartmentModel.findApartment(req.account.id)
-        return res.status(200).json({ apartment })
+        return res.status(200).json({ data: apartment })
     },
 )
 
@@ -25,7 +25,7 @@ apartmentRouter.post(
                 req.body.name,
                 req.account.id,
             )
-            return res.status(201).json({ apartment: newApartment })
+            return res.status(201).json({ data: newApartment })
         } catch (err) {
             logger.error(err)
             next(err)
