@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import bcrypt from 'bcrypt'
+import { Prisma } from '@prisma/client'
 
 import accountModel from '../models/account'
 import processClientError from '../util/error'
@@ -28,6 +29,13 @@ registerRouter.post('/', async (req, res, next) => {
         })
     } catch (err) {
         logger.error(err)
+        if (err instanceof Prisma.PrismaClientKnownRequestError) {
+            if (err.code === 'P2002') {
+                return res.status(401).json({
+                    error: 'User with the same name has already existed',
+                })
+            }
+        }
         next(err)
     }
 })

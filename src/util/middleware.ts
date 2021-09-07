@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client'
 import accountModel from '../models/account'
 import logger from './logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
+import { log } from 'console'
 
 function requestLogger(
     request: Request,
@@ -31,12 +32,10 @@ function errorHandler(
     logger.error(error.message)
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-            return response.status(401).json({
-                error:
-          'There is unique constraint violation, anew user cannot be created',
-            })
-        }
+        logger.error('Prisma error', error)
+        return response
+            .status(401)
+            .json({ error: 'error when writing to database' })
     } else if (error.name === 'JsonWebTokenError') {
         return response.status(401).json({ error: 'invalid token' })
     } else if (error.name === 'TokenExpiredError') {

@@ -2,11 +2,11 @@ import { Apartment, Prisma, PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-async function findApartment(adminId: number): Promise<Apartment | null> {
+async function findApartment(
+    findParams: Record<string, string | number>,
+): Promise<Apartment | null> {
     const apartment = await prisma.apartment.findFirst({
-        where: {
-            adminId: adminId,
-        },
+        where: findParams,
     })
     return apartment
 }
@@ -28,10 +28,10 @@ async function createApartment(
     return newApartment
 }
 
-async function deleteApartment(adminId: number): Promise<Apartment | null> {
+async function deleteApartment(id: number): Promise<Apartment | null> {
     const deletedApartment = await prisma.apartment.findFirst({
         where: {
-            adminId: adminId,
+            id,
         },
     })
 

@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { Prisma } from '@prisma/client'
 
 import apartmentModel from '../models/apartment'
 import middleware from '../util/middleware'
@@ -11,9 +12,9 @@ apartmentRouter.get(
     '/',
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
-        const apartment = await apartmentModel.findApartmentByAdminId(
-            req.account.id,
-        )
+        const apartment = await apartmentModel.findApartment({
+            adminId: req.account.id,
+        })
 
         return res.status(200).json({ data: apartment })
     },
@@ -31,6 +32,13 @@ apartmentRouter.post(
             return res.status(201).json({ data: newApartment })
         } catch (err) {
             logger.error(err)
+            if (err instanceof Prisma.PrismaClientKnownRequestError) {
+                if (err.code === 'P2014') {
+                    return res.status(401).json({
+                        error: 'One account can only create one apartment',
+                    })
+                }
+            }
             next(err)
         }
     },
@@ -47,7 +55,7 @@ apartmentRouter.delete(
         const { account } = req
 
         try {
-            const deletedApartment = await apartmentModel.findApartmentById(id)
+            const deletedApartment = await apartmentModel.findApartment({ id })
             if (deletedApartment === null)
                 return res
                     .status(404)
