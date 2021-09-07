@@ -17,8 +17,30 @@ async function createNewInvitation(
     return newInvitation
 }
 
-async function findInvitationsByInviteeId(inviteeId) {}
+async function findInvitations(
+    findParams: Record<string, string | number>,
+): Promise<Invitation[]> {
+    const invitations = await prisma.invitation.findMany({
+        where: findParams,
+        orderBy: {
+            id: 'asc',
+        },
+    })
+    return invitations
+}
+
+async function deleteInvitations(
+    deleteParams: Record<string, string | number>,
+): Promise<number> {
+    const deletedInvitations = await prisma.invitation.deleteMany({
+        where: deleteParams,
+    })
+
+    return deletedInvitations.count
+}
 
 export default {
     createNewInvitation,
+    findInvitations,
+    deleteInvitations,
 }
