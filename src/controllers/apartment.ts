@@ -59,16 +59,14 @@ apartmentRouter.delete(
             if (deletedApartment === null)
                 return res
                     .status(404)
-                    .json({ error: `Apartment with id ${id} doesnot exist` })
+                    .json({ error: `Apartment with id ${id} does not exist` })
             if (deletedApartment.adminId !== account.id) {
                 return res
                     .status(403)
                     .json({ error: 'User is forbidden to remove this apartment' })
             }
             await apartmentModel.deleteApartment(id)
-            return res
-                .status(204)
-                .json({ msg: `Delete apartment ${deletedApartment.name}` })
+            return res.status(204)
         } catch (err) {
             logger.error(err)
             next(err)
