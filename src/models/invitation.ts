@@ -1,6 +1,18 @@
-import { PrismaClient, Invitation } from '.prisma/client'
+import { PrismaClient, Invitation } from '@prisma/client'
+
+import { DisplayAccount } from './account'
 
 const prisma = new PrismaClient()
+
+type PendingInvitation = {
+    id: number
+    invitor: DisplayAccount
+    invitee: DisplayAccount
+    apartment: {
+        id: number
+        name: string
+    }
+}
 
 async function createNewInvitation(
     invitorId: number,
@@ -18,12 +30,35 @@ async function createNewInvitation(
 }
 
 async function findInvitations(
-    findParams: Record<string, string | number>,
-): Promise<Invitation[]> {
+    findParams: Record<any, any>,
+): Promise<PendingInvitation[]> {
     const invitations = await prisma.invitation.findMany({
         where: findParams,
         orderBy: {
             id: 'asc',
+        },
+        select: {
+            id: true,
+            invitor: {
+                select: {
+                    id: true,
+                    username: true,
+                    name: true,
+                },
+            },
+            invitee: {
+                select: {
+                    id: true,
+                    username: true,
+                    name: true,
+                },
+            },
+            apartment: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
         },
     })
     return invitations

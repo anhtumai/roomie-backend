@@ -1,12 +1,16 @@
 import { PrismaClient, Account } from '@prisma/client'
 
-import { AccountWithoutPassword } from '../types/express-middleware'
-
 const prisma = new PrismaClient()
+
+export type DisplayAccount = {
+    id: number
+    username: string
+    name: string
+}
 
 async function findAccountWithoutPassword(
     findParams: Record<string, string | number>,
-): Promise<AccountWithoutPassword | null> {
+): Promise<DisplayAccount | null> {
     const account = await prisma.account.findFirst({
         where: findParams,
         select: {
@@ -31,7 +35,7 @@ async function createAccount(
     username: string,
     name: string,
     passwordHash: string,
-): Promise<AccountWithoutPassword> {
+): Promise<DisplayAccount> {
     const newAccount = await prisma.account.create({
         data: {
             username,
