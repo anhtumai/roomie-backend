@@ -45,11 +45,12 @@ model Member {
 
 model Invitation {
 	@@map(name: "invitation")
+	id          Int       @id @default(autoincrement())
 	invitor		Account		@relation("Invitor", fields: [invitorId], references: [id])
 	invitorId	Int
 	invitee		Account		@relation("Invitee", fields: [inviteeId], references: [id])
 	inviteeId	Int
 	apartment	Apartment	@relation(fields: [apartmentId], references: [id])
 	apartmentId	Int
-	@@id(fields: [invitorId, inviteeId])
+	@@unique(fields: [invitorId, inviteeId])
 }
