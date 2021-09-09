@@ -54,7 +54,7 @@ invitationRouter.post(
                 invitee.id,
                 apartmentId,
             )
-            return res.status(204).json({ invitor: req.account, invitee, apartment })
+            return res.status(204)
         } catch (err) {
             logger.error(err)
             next(err)
