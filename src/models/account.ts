@@ -8,7 +8,7 @@ export type DisplayAccount = {
     name: string
 }
 
-async function findAccountWithoutPassword(
+async function findDisplayAccount(
     findParams: Record<string, string | number>,
 ): Promise<DisplayAccount | null> {
     const account = await prisma.account.findFirst({
@@ -53,6 +53,6 @@ async function createAccount(
 
 export default {
     findAccount,
-    findAccountWithoutPassword,
+    findDisplayAccount,
     createAccount,
 }
