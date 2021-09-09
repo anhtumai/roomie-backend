@@ -12,14 +12,24 @@ const invitationRouter = Router()
 invitationRouter.get(
     '/',
     middleware.accountExtractor,
-    async (req, res, next) => {},
+    async (req: RequestAfterExtractor, res, next) => {
+        const accountId = req.account.id
+        const queryInvitationsParams = {
+            OR: [{ invitorId: accountId }, { inviteeId: accountId }],
+        }
+        const pendingInvitations = await invitationModel.findInvitations(
+            queryInvitationsParams,
+        )
+
+        return res.status(200).json({ data: pendingInvitations })
+    },
 )
 
 invitationRouter.post(
     '/',
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
-        const inviteeUsername = req.body.name
+        const inviteeUsername = req.body.username
         const apartmentId = req.body.apartmentId
 
         if (inviteeUsername === req.account.username)
@@ -51,3 +61,5 @@ invitationRouter.post(
         }
     },
 )
+
+export default invitationRouter
