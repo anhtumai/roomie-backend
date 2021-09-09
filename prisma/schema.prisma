@@ -36,11 +36,11 @@ model Apartment {
 
 model Member {
 	@@map(name: "member")
-	id          Int       @id @default(autoincrement())
 	account     Account   @relation(fields: [accountId], references: [id])
 	accountId   Int
 	apartment   Apartment @relation(fields: [apartmentId], references: [id])
 	apartmentId Int
+	@@id([accountId, apartmentId])
 }
 
 model Invitation {
