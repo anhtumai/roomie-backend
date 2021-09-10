@@ -166,7 +166,7 @@ invitationRouter.post(
 
             await invitationModel.deleteMany({ id: invitationId })
 
-            return res.status(204)
+            return res.status(204).json()
         } catch (err) {
             logger.error(err)
             next(err)
