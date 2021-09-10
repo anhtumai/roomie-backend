@@ -31,7 +31,7 @@ async function findAccount(
     return account
 }
 
-async function createAccount(
+async function create(
     username: string,
     name: string,
     passwordHash: string,
@@ -51,8 +51,27 @@ async function createAccount(
     }
 }
 
+async function deleteOne(deleteParams: Record<any, any>): Promise<void> {
+    await prisma.account.delete({
+        where: deleteParams,
+    })
+}
+
+async function deleteMany(deleteParams: Record<any, any>): Promise<void> {
+    await prisma.account.deleteMany({
+        where: deleteParams,
+    })
+}
+
+async function deleteAll(): Promise<void> {
+    await prisma.account.deleteMany({})
+}
+
 export default {
     findAccount,
     findDisplayAccount,
-    createAccount,
+    create,
+    deleteOne,
+    deleteMany,
+    deleteAll,
 }

@@ -2,7 +2,7 @@ import { Apartment, PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-async function findApartment(
+async function find(
     findParams: Record<string, string | number>,
 ): Promise<Apartment | null> {
     const apartment = await prisma.apartment.findFirst({
@@ -11,10 +11,7 @@ async function findApartment(
     return apartment
 }
 
-async function createApartment(
-    name: string,
-    adminId: number,
-): Promise<Apartment> {
+async function create(name: string, adminId: number): Promise<Apartment> {
     const newApartment = await prisma.apartment.create({
         data: {
             name,
@@ -28,25 +25,26 @@ async function createApartment(
     return newApartment
 }
 
-async function deleteApartment(id: number): Promise<Apartment | null> {
-    const deletedApartment = await prisma.apartment.findFirst({
-        where: {
-            id,
-        },
-    })
-
-    if (deletedApartment === null) return null
-
+async function deleteOne(deleteParams: Record<any, any>): Promise<void> {
     await prisma.apartment.delete({
-        where: {
-            id: deletedApartment.id,
-        },
+        where: deleteParams,
     })
-    return deletedApartment
+}
+
+async function deleteMany(deleteParams: Record<any, any>): Promise<void> {
+    await prisma.apartment.deleteMany({
+        where: deleteParams,
+    })
+}
+
+async function deleteAll(): Promise<void> {
+    await prisma.apartment.deleteMany({})
 }
 
 export default {
-    findApartment,
-    createApartment,
-    deleteApartment,
+    find,
+    create,
+    deleteOne,
+    deleteMany,
+    deleteAll,
 }

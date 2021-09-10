@@ -19,21 +19,21 @@ registerRouter.post('/', async (req, res, next) => {
     const passwordHash = await bcrypt.hash(body.password, saltRounds)
 
     try {
-        const newAccount = await accountModel.createAccount(
+        const newAccount = await accountModel.create(
             body.username,
             body.name,
             passwordHash,
         )
-        return res.status(201).json({
-            msg: `Create new account ${newAccount.username} with name ${newAccount.name}`,
-        })
+        return res.status(201).json(newAccount)
     } catch (err) {
         logger.error(err)
         if (err instanceof Prisma.PrismaClientKnownRequestError) {
             if (err.code === 'P2002') {
-                return res.status(401).json({
-                    error: 'User with the same name has already existed',
-                })
+                return processClientError(
+                    res,
+                    400,
+                    'User with the same name has already existed',
+                )
             }
         }
         next(err)

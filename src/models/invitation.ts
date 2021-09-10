@@ -14,24 +14,45 @@ type PendingInvitation = {
     }
 }
 
-async function createNewInvitation(
+async function create(
     invitorId: number,
     inviteeId: number,
     apartmentId: number,
-): Promise<Invitation | null> {
+): Promise<PendingInvitation | null> {
     const newInvitation = await prisma.invitation.create({
         data: {
             invitorId,
             inviteeId,
             apartmentId,
         },
+        select: {
+            id: true,
+            invitor: {
+                select: {
+                    id: true,
+                    username: true,
+                    name: true,
+                },
+            },
+            invitee: {
+                select: {
+                    id: true,
+                    username: true,
+                    name: true,
+                },
+            },
+            apartment: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+        },
     })
     return newInvitation
 }
 
-async function findInvitation(
-    findParams: Record<any, any>,
-): Promise<PendingInvitation> {
+async function find(findParams: Record<any, any>): Promise<PendingInvitation> {
     const invitation = await prisma.invitation.findFirst({
         where: findParams,
         select: {
@@ -61,7 +82,7 @@ async function findInvitation(
     return invitation
 }
 
-async function findInvitations(
+async function findMany(
     findParams: Record<any, any>,
 ): Promise<PendingInvitation[]> {
     const invitations = await prisma.invitation.findMany({
@@ -96,7 +117,13 @@ async function findInvitations(
     return invitations
 }
 
-async function deleteInvitations(
+async function deleteOne(deleteParams: Record<any, any>): Promise<void> {
+    await prisma.invitation.delete({
+        where: deleteParams,
+    })
+}
+
+async function deleteMany(
     deleteParams: Record<string, string | number>,
 ): Promise<number> {
     const deletedInvitations = await prisma.invitation.deleteMany({
@@ -106,9 +133,15 @@ async function deleteInvitations(
     return deletedInvitations.count
 }
 
+async function deleteAll(): Promise<void> {
+    await prisma.invitation.deleteMany({})
+}
+
 export default {
-    createNewInvitation,
-    findInvitation,
-    findInvitations,
-    deleteInvitations,
+    create,
+    find,
+    findMany,
+    deleteOne,
+    deleteMany,
+    deleteAll,
 }

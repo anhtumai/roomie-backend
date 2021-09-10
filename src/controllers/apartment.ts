@@ -12,11 +12,16 @@ apartmentRouter.get(
     '/',
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
-        const apartment = await apartmentModel.findApartment({
-            adminId: req.account.id,
-        })
+        try {
+            const apartment = await apartmentModel.find({
+                adminId: req.account.id,
+            })
 
-        return res.status(200).json({ data: apartment })
+            return res.status(200).json({ data: apartment })
+        } catch (err) {
+            logger.error(err)
+            next(err)
+        }
     },
 )
 
@@ -25,7 +30,7 @@ apartmentRouter.post(
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
         try {
-            const newApartment = await apartmentModel.createApartment(
+            const newApartment = await apartmentModel.create(
                 req.body.name,
                 req.account.id,
             )
@@ -55,7 +60,7 @@ apartmentRouter.delete(
         const { account } = req
 
         try {
-            const deletedApartment = await apartmentModel.findApartment({ id })
+            const deletedApartment = await apartmentModel.find({ id })
             if (deletedApartment === null)
                 return res
                     .status(404)
@@ -65,7 +70,7 @@ apartmentRouter.delete(
                     .status(403)
                     .json({ error: 'User is forbidden to remove this apartment' })
             }
-            await apartmentModel.deleteApartment(id)
+            await apartmentModel.deleteOne({ id })
             return res.status(204)
         } catch (err) {
             logger.error(err)

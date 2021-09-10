@@ -2,7 +2,7 @@ import { Account, Apartment, Membership, PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-async function addMembership(
+async function create(
     memberId: number,
     apartmentId: number,
 ): Promise<Membership> {
@@ -37,7 +37,7 @@ async function isMemberOfApartment(
     return membership.apartmentId === apartmentId
 }
 
-async function findApartment(memberId: number): Promise<Apartment | null> {
+async function find(memberId: number): Promise<Apartment | null> {
     const membership = await prisma.membership.findFirst({
         where: {
             memberId,
@@ -62,9 +62,28 @@ async function findAllMembers(apartmentId: number): Promise<Account[]> {
     return memberships.map((membership) => membership.member)
 }
 
+async function deleteOne(deleteParams: Record<any, any>): Promise<void> {
+    await prisma.membership.delete({
+        where: deleteParams,
+    })
+}
+
+async function deleteMany(deleteParams: Record<any, any>): Promise<void> {
+    await prisma.membership.deleteMany({
+        where: deleteParams,
+    })
+}
+
+async function deleteAll(): Promise<void> {
+    await prisma.membership.deleteMany({})
+}
+
 export default {
-    addMembership,
+    create,
     isMemberOfApartment,
-    findApartment,
+    find,
     findAllMembers,
+    deleteOne,
+    deleteMany,
+    deleteAll,
 }
