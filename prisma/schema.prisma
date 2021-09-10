@@ -18,7 +18,7 @@ model Account {
 	password	String
 
 	apartment	Apartment?
-	members		Member[]
+	memberships	Membership[]
 	invitors	Invitation[]	@relation("Invitor")
 	invitees	Invitation[]	@relation("Invitee")
 }
@@ -30,17 +30,17 @@ model Apartment {
 	admin		Account @relation(fields: [adminId], references: [id])
 	adminId		Int
 
-	members		Member[]
+	members		Membership[]
 	invitations	Invitation[]
 }
 
-model Member {
-	@@map(name: "member")
-	account     Account   @relation(fields: [accountId], references: [id])
-	accountId   Int
+model Membership {
+	@@map(name: "membership")
+	member     Account   @relation(fields: [memberId], references: [id])
+	memberId   Int
 	apartment   Apartment @relation(fields: [apartmentId], references: [id])
 	apartmentId Int
-	@@id([accountId, apartmentId])
+	@@id([memberId, apartmentId])
 }
 
 model Invitation {
