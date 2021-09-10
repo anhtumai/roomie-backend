@@ -5,9 +5,9 @@ function processClientError(
     response: Response,
     statusCode: number,
     message: string,
-): void {
+): Response<any, Record<string, any>> {
     logger.error('Client Error:', message)
-    response.status(statusCode).json({ error: message })
+    return response.status(statusCode).json({ error: message })
 }
 
 export default processClientError

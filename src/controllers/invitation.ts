@@ -60,9 +60,11 @@ invitationRouter.post(
                     apartmentId,
                 ))
             ) {
-                return res.status(404).json({
-                    error: 'You are not the member or the apartment id does not exist',
-                })
+                return processClientError(
+                    res,
+                    404,
+                    'You are not the member or the apartment id does not exist',
+                )
             }
 
             const newInvitation = await invitationModel.create(
@@ -121,9 +123,11 @@ invitationRouter.post(
                 id: invitationId,
             })
             if (invitation.invitee.id !== req.account.id) {
-                return res
-                    .status(403)
-                    .json({ error: 'You are forbidden to accept this invitation' })
+                return processClientError(
+                    res,
+                    403,
+                    'You are forbidden to accept this invitation',
+                )
             }
 
             await membershipModel.create(invitationId, invitation.apartment.id)

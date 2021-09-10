@@ -5,6 +5,7 @@ import apartmentModel from '../models/apartment'
 import middleware from '../util/middleware'
 import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
+import processClientError from '../util/error'
 
 const apartmentRouter = Router()
 
@@ -39,9 +40,11 @@ apartmentRouter.post(
             logger.error(err)
             if (err instanceof Prisma.PrismaClientKnownRequestError) {
                 if (err.code === 'P2014') {
-                    return res.status(401).json({
-                        error: 'One account can only create one apartment',
-                    })
+                    return processClientError(
+                        res,
+                        401,
+                        'One account can only create one apartment',
+                    )
                 }
             }
             next(err)
@@ -55,20 +58,24 @@ apartmentRouter.delete(
     async (req: RequestAfterExtractor, res, next) => {
         const id = Number(req.params.id)
         if (isNaN(id)) {
-            return res.status(400).json({ error: 'Apartment ID must be number' })
+            return processClientError(res, 400, 'Apartment ID must be number')
         }
         const { account } = req
 
         try {
             const deletedApartment = await apartmentModel.find({ id })
             if (deletedApartment === null)
-                return res
-                    .status(404)
-                    .json({ error: `Apartment with id ${id} does not exist` })
+                return processClientError(
+                    res,
+                    404,
+                    `Apartment with id ${id} does not exist`,
+                )
             if (deletedApartment.adminId !== account.id) {
-                return res
-                    .status(403)
-                    .json({ error: 'User is forbidden to remove this apartment' })
+                return processClientError(
+                    res,
+                    403,
+                    'User is forbidden to remove this apartment',
+                )
             }
             await apartmentModel.deleteOne({ id })
             return res.status(204)

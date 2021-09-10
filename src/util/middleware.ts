@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client'
 
 import accountModel from '../models/account'
 import logger from './logger'
+import processClientError from './error'
 import { RequestAfterExtractor } from '../types/express-middleware'
 
 function requestLogger(
@@ -19,7 +20,7 @@ function requestLogger(
 }
 
 function unknownEndpoint(request: Request, response: Response): void {
-    response.status(404).json({ error: 'unknown endpoint' })
+    processClientError(response, 404, 'Unknown endpoint')
 }
 
 function errorHandler(
@@ -32,13 +33,11 @@ function errorHandler(
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
         logger.error('Prisma error', error)
-        return response
-            .status(401)
-            .json({ error: 'error when writing to database' })
+        return processClientError(response, 400, 'error when working with database')
     } else if (error.name === 'JsonWebTokenError') {
-        return response.status(401).json({ error: 'invalid token' })
+        return processClientError(response, 401, 'invalid token')
     } else if (error.name === 'TokenExpiredError') {
-        return response.status(401).json({ error: 'token expired' })
+        return processClientError(response, 401, 'token expired')
     }
     logger.error('Missing err', error)
     next(error)
