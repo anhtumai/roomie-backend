@@ -6,7 +6,6 @@ import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import accountModel from '../models/account'
 import membershipModel from '../models/membership'
-import invitation from '../models/invitation'
 
 const invitationRouter = Router()
 
@@ -119,6 +118,38 @@ invitationRouter.post(
 
             await membershipModel.addMembership(invitationId, invitation.apartment.id)
             await invitationModel.deleteInvitations({ inviteeId: invitationId })
+
+            return res.status(204)
+        } catch (err) {
+            logger.error(err)
+            next(err)
+        }
+    },
+)
+
+invitationRouter.post(
+    '/:id/cancel',
+    middleware.accountExtractor,
+    async (req: RequestAfterExtractor, res, next) => {
+        const invitationId = Number(req.params.id)
+        if (isNaN(invitationId)) {
+            return res.status(400).json({ error: 'Apartment ID must be number' })
+        }
+
+        console.log('Cancel', invitationId)
+        try {
+            const invitation = await invitationModel.findInvitation({
+                id: invitationId,
+            })
+            if (invitation.invitor.id !== req.account.id) {
+                return res
+                    .status(403)
+                    .json({ error: 'You are forbidden to cancel this invitation' })
+            }
+
+            await invitationModel.deleteInvitations({ id: invitationId })
+
+            return res.status(204)
         } catch (err) {
             logger.error(err)
             next(err)
