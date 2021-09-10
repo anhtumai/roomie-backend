@@ -92,11 +92,11 @@ invitationRouter.post(
             const invitation = await invitationModel.find({
                 id: invitationId,
             })
-            if (invitation.invitee.id !== req.account.id) {
+            if (invitation === null || invitation.invitee.id !== req.account.id) {
                 return processClientError(
                     res,
                     403,
-                    'You are forbidden to reject this invitation',
+                    'You are forbidden to reject this invitation or this invitation does not exist',
                 )
             }
             await invitationModel.deleteMany({ id: invitationId })
@@ -122,16 +122,17 @@ invitationRouter.post(
             const invitation = await invitationModel.find({
                 id: invitationId,
             })
-            if (invitation.invitee.id !== req.account.id) {
+            console.log('Invitation', invitation)
+            if (invitation === null || invitation.invitee.id !== req.account.id) {
                 return processClientError(
                     res,
                     403,
-                    'You are forbidden to accept this invitation',
+                    'You are forbidden to accept this invitation or this invitation does not exist',
                 )
             }
 
-            await membershipModel.create(invitationId, invitation.apartment.id)
-            await invitationModel.deleteMany({ inviteeId: invitationId })
+            await membershipModel.create(req.account.id, invitation.apartment.id)
+            await invitationModel.deleteMany({ inviteeId: req.account.id })
 
             return res.status(200).json({ msg: `Accept invitation ${invitationId}` })
         } catch (err) {

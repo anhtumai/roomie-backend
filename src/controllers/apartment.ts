@@ -6,6 +6,7 @@ import middleware from '../util/middleware'
 import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
+import membershipModel from '../models/membership'
 
 const apartmentRouter = Router()
 
@@ -35,6 +36,7 @@ apartmentRouter.post(
                 req.body.name,
                 req.account.id,
             )
+            await membershipModel.create(req.account.id, newApartment.id)
             return res.status(201).json({ data: newApartment })
         } catch (err) {
             logger.error(err)
@@ -77,8 +79,9 @@ apartmentRouter.delete(
                     'User is forbidden to remove this apartment',
                 )
             }
+            await membershipModel.deleteMany({ apartmentId: id })
             await apartmentModel.deleteOne({ id })
-            return res.status(204)
+            return res.status(204).json()
         } catch (err) {
             logger.error(err)
             next(err)
