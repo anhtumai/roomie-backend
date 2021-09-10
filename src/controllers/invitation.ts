@@ -19,7 +19,7 @@ invitationRouter.get(
             OR: [{ invitorId: accountId }, { inviteeId: accountId }],
         }
         try {
-            const pendingInvitations = await invitationModel.find(
+            const pendingInvitations = await invitationModel.findMany(
                 queryInvitationsParams,
             )
 
@@ -42,7 +42,7 @@ invitationRouter.post(
             return processClientError(res, 400, 'You cannot invite yourself')
 
         try {
-            const invitee = await accountModel.findAccount({
+            const invitee = await accountModel.findDisplayAccount({
                 username: inviteeUsername,
             })
             if (invitee === null) {
@@ -156,11 +156,11 @@ invitationRouter.post(
             const invitation = await invitationModel.find({
                 id: invitationId,
             })
-            if (invitation.invitor.id !== req.account.id) {
+            if (invitation === null || invitation.invitor.id !== req.account.id) {
                 return processClientError(
                     res,
                     403,
-                    'You are forbidden to cancel this invitation',
+                    'You are forbidden to cancel this invitation or this invitation does not exist',
                 )
             }
 

@@ -28,16 +28,20 @@ async function isMemberOfApartment(
     memberId: number,
     apartmentId: number,
 ): Promise<boolean> {
-    const membership = await prisma.membership.findUnique({
-        where: {
-            memberId,
-        },
-    })
+    const membership = await find({ memberId })
     if (membership === null) return false
     return membership.apartmentId === apartmentId
 }
+async function find(
+    findParams: Record<string, string | number>,
+): Promise<Membership | null> {
+    const membership = await prisma.membership.findFirst({
+        where: findParams,
+    })
+    return membership
+}
 
-async function find(memberId: number): Promise<Apartment | null> {
+async function findApartment(memberId: number): Promise<Apartment | null> {
     const membership = await prisma.membership.findFirst({
         where: {
             memberId,
@@ -82,6 +86,7 @@ export default {
     create,
     isMemberOfApartment,
     find,
+    findApartment,
     findAllMembers,
     deleteOne,
     deleteMany,
