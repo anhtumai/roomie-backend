@@ -42,14 +42,8 @@ async function findApartment(memberId: number): Promise<Apartment | null> {
         where: {
             memberId,
         },
-        select: {
-            apartment: {
-                select: {
-                    id: true,
-                    name: true,
-                    adminId: true,
-                },
-            },
+        include: {
+            apartment: true,
         },
     })
     if (membership === null) return null
