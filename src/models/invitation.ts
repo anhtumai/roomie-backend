@@ -29,6 +29,38 @@ async function createNewInvitation(
     return newInvitation
 }
 
+async function findInvitation(
+    findParams: Record<any, any>,
+): Promise<PendingInvitation> {
+    const invitation = await prisma.invitation.findFirst({
+        where: findParams,
+        select: {
+            id: true,
+            invitor: {
+                select: {
+                    id: true,
+                    username: true,
+                    name: true,
+                },
+            },
+            invitee: {
+                select: {
+                    id: true,
+                    username: true,
+                    name: true,
+                },
+            },
+            apartment: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+        },
+    })
+    return invitation
+}
+
 async function findInvitations(
     findParams: Record<any, any>,
 ): Promise<PendingInvitation[]> {
@@ -76,6 +108,7 @@ async function deleteInvitations(
 
 export default {
     createNewInvitation,
+    findInvitation,
     findInvitations,
     deleteInvitations,
 }
