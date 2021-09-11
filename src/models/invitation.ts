@@ -1,8 +1,6 @@
-import { PrismaClient, Invitation } from '@prisma/client'
-
 import { DisplayAccount } from './account'
 
-const prisma = new PrismaClient()
+import { prisma } from './client'
 
 type PendingInvitation = {
     id: number

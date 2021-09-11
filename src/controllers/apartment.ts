@@ -15,9 +15,7 @@ apartmentRouter.get(
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
         try {
-            const apartment = await apartmentModel.find({
-                adminId: req.account.id,
-            })
+            const apartment = await membershipModel.findApartment(req.account.id)
 
             return res.status(200).json({ data: apartment })
         } catch (err) {

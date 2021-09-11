@@ -1,6 +1,6 @@
-import { Apartment, PrismaClient } from '@prisma/client'
+import { Apartment } from '@prisma/client'
 
-const prisma = new PrismaClient()
+import { prisma } from './client'
 
 async function find(
     findParams: Record<string, string | number>,

@@ -8,9 +8,9 @@ import invitationModel from '../models/invitation'
 const testingRouter = Router()
 
 testingRouter.post('/deleteAll', async (req, res, next) => {
-    await apartmentModel.deleteAll()
-    await membershipModel.deleteAll()
     await invitationModel.deleteAll()
+    await membershipModel.deleteAll()
+    await apartmentModel.deleteAll()
     await accountModel.deleteAll()
 
     return res.status(200).json({ msg: 'Delete everything' })

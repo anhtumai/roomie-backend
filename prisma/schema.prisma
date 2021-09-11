@@ -36,11 +36,10 @@ model Apartment {
 
 model Membership {
 	@@map(name: "membership")
-	member     Account   @relation(fields: [memberId], references: [id])
-	memberId   Int
+	member     Account	@relation(fields: [memberId], references: [id])
+	memberId   Int		@id
 	apartment   Apartment @relation(fields: [apartmentId], references: [id])
 	apartmentId Int
-	@@id([memberId, apartmentId])
 }
 
 model Invitation {

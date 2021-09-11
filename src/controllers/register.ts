@@ -11,8 +11,8 @@ const registerRouter = Router()
 registerRouter.post('/', async (req, res, next) => {
     const body = req.body
 
-    if (!body.password) {
-        return processClientError(res, 400, 'Password is missing')
+    if (!body.username || !body.name || !body.password) {
+        return processClientError(res, 400, 'Register information is missing')
     }
 
     const saltRounds = 10

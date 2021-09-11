@@ -1,6 +1,6 @@
-import { PrismaClient, Account } from '@prisma/client'
+import { Account } from '@prisma/client'
 
-const prisma = new PrismaClient()
+import { prisma } from './client'
 
 export type DisplayAccount = {
     id: number

@@ -1,6 +1,6 @@
-import { Account, Apartment, Membership, PrismaClient } from '@prisma/client'
+import { Account, Apartment, Membership } from '@prisma/client'
 
-const prisma = new PrismaClient()
+import { prisma } from './client'
 
 async function create(
     memberId: number,

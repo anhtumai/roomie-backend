@@ -11,6 +11,10 @@ const loginRouter = Router()
 loginRouter.post('/', async (req, res, next) => {
     const body = req.body
 
+    if (!body.username || !body.password) {
+        return processClientError(res, 400, 'Username or password is missing')
+    }
+
     try {
         const account = await accountModel.findAccount({ username: body.username })
         const passwordCorrect =
