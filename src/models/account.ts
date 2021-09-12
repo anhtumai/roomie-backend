@@ -3,7 +3,7 @@ import { Account } from '@prisma/client'
 import { prisma } from './client'
 
 export type DisplayAccount = {
-    id: number
+    id?: number
     username: string
     name: string
 }

@@ -153,7 +153,10 @@ invitationRouter.post(
             const invitation = await invitationModel.find({
                 id: invitationId,
             })
-            if (invitation === null || invitation.invitor.id !== req.account.id) {
+            if (
+                invitation === null ||
+        invitation.invitor.username !== req.account.username
+            ) {
                 return processClientError(
                     res,
                     403,

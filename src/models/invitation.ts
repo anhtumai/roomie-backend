@@ -27,7 +27,6 @@ async function create(
             id: true,
             invitor: {
                 select: {
-                    id: true,
                     username: true,
                     name: true,
                 },
