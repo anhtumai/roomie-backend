@@ -53,3 +53,21 @@ model Invitation {
 	apartmentId	Int
 	@@unique(fields: [invitorId, inviteeId])
 }
+
+model Task {
+	@@map(name: "task")
+	id			Int		@id	@default(autoincrement())
+	name		String	@unique	@db.VarChar(50)
+	description	String	@db.VarChar(500)
+	frequency	Int
+	difficulty	Int
+	start		DateTime
+	end			DateTime
+	state		TaskType	@default(confirmed)	
+}
+
+enum TaskType {
+	confirmed
+	pending
+	rejected
+}
