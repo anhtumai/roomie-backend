@@ -38,6 +38,14 @@ invitationRouter.post(
         const inviteeUsername = req.body.username
         const apartmentId = req.body.apartmentId
 
+        if (!req.body.username || !req.body.apartmentId) {
+            return processClientError(
+                res,
+                400,
+                'Invitee username or apartment ID missing',
+            )
+        }
+
         if (inviteeUsername === req.account.username)
             return processClientError(res, 400, 'You cannot invite yourself')
 

@@ -29,6 +29,9 @@ apartmentRouter.post(
     '/',
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
+        if (!req.body.name) {
+            return processClientError(res, 400, 'Apartment name is missing')
+        }
         try {
             const newApartment = await apartmentModel.create(
                 req.body.name,
