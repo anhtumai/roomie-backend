@@ -15,8 +15,8 @@ export default [
         password: 'secondtestuserpassword',
     },
     {
-        username: 'anotheruser',
-        name: 'Another User',
-        password: 'anotheruserpassword',
+        username: 'thirdtestuser',
+        name: 'Third Test User',
+        password: 'thirdtestuserpassword',
     },
 ]

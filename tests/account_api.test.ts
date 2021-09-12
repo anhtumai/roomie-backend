@@ -9,7 +9,6 @@ import users from './users'
 const api = supertest(app)
 
 beforeAll(async () => {
-    console.log('Reset all everything')
     await api.post('/api/testing/deleteAll')
 })
 
