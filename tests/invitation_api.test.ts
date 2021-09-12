@@ -174,7 +174,7 @@ describe('Test reject invitation', () => {
     })
 })
 
-describe('Test accept connection', () => {
+describe('Test accept invitation', () => {
     let testuser1Invitation: PendingInvitation
     let testuser2Invitation: PendingInvitation
     let testuser3Invitation: PendingInvitation
