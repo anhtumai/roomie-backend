@@ -114,7 +114,7 @@ invitationRouter.post(
     async (req: RequestAfterExtractor, res, next) => {
         const invitationId = Number(req.params.id)
         if (isNaN(invitationId)) {
-            return processClientError(res, 400, 'Apartment ID must be number')
+            return processClientError(res, 400, 'Invitation ID must be number')
         }
 
         console.log('Accept', invitationId)
@@ -148,7 +148,7 @@ invitationRouter.post(
     async (req: RequestAfterExtractor, res, next) => {
         const invitationId = Number(req.params.id)
         if (isNaN(invitationId)) {
-            return processClientError(res, 400, 'Apartment ID must be number')
+            return processClientError(res, 400, 'Invitation ID must be number')
         }
 
         console.log('Cancel', invitationId)
