@@ -117,12 +117,10 @@ invitationRouter.post(
             return processClientError(res, 400, 'Invitation ID must be number')
         }
 
-        console.log('Accept', invitationId)
         try {
             const invitation = await invitationModel.find({
                 id: invitationId,
             })
-            console.log('Invitation', invitation)
             if (invitation === null || invitation.invitee.id !== req.account.id) {
                 return processClientError(
                     res,
@@ -151,7 +149,6 @@ invitationRouter.post(
             return processClientError(res, 400, 'Invitation ID must be number')
         }
 
-        console.log('Cancel', invitationId)
         try {
             const invitation = await invitationModel.find({
                 id: invitationId,
