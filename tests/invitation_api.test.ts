@@ -3,7 +3,7 @@ import supertest from 'supertest'
 import app from '../src/app'
 import { prisma } from '../src/models/client'
 import aprtmentModel from '../src/models/apartment'
-import invitationModel from '../src/models/invitation'
+import invitationModel, { PendingInvitation } from '../src/models/invitation'
 
 import users from './users'
 import accountModel from '../src/models/account'
@@ -26,6 +26,14 @@ async function login(username: string, password: string): Promise<string> {
     return response.body.token
 }
 
+async function getAllInvitations(token: string): Promise<PendingInvitation[]> {
+    const response = await api
+        .get('/api/invitation')
+        .set('Authorization', 'Bearer ' + token)
+        .expect(200)
+    return response.body.data
+}
+
 const user1 = users.find((user) => user.username === 'anhtumai')
 const testuser1 = users.find((user) => user.username === 'firsttestuser')
 const testuser2 = users.find((user) => user.username === 'secondtestuser')
@@ -36,6 +44,7 @@ const apartmentName = 'Hoas Family Apartment'
 let user1Token = ''
 let testuser1Token = ''
 let testuser2Token = ''
+let testuser3Token = ''
 
 beforeAll(async () => {
     await api.post('/api/testing/deleteAll')
@@ -47,6 +56,7 @@ beforeAll(async () => {
     user1Token = await login(user1.username, user1.password)
     testuser1Token = await login(testuser1.username, testuser1.password)
     testuser2Token = await login(testuser2.username, testuser2.password)
+    testuser3Token = await login(testuser3.username, testuser3.password)
 })
 
 describe('Test create apartment', () => {
@@ -116,7 +126,7 @@ describe('Test send invitation', () => {
             .send({ username: 'anhtumai', apartmentId })
             .expect(404)
     })
-    test('Create valid invitation', async () => {
+    test('Create valid invitation for testuser1', async () => {
         const response = await api
             .post('/api/invitation')
             .set('Authorization', 'Bearer ' + user1Token)
@@ -127,6 +137,34 @@ describe('Test send invitation', () => {
         const invitationId = response.body.id
         const invitation = await invitationModel.find({ id: invitationId })
         expect(invitation.invitee.username).toEqual(testuser1.username)
+    })
+})
+
+describe('Test reject invitation', () => {
+    let rejectedInvitation: PendingInvitation
+    test('testuse get all invitations', async () => {
+        const pendingInvitations = await getAllInvitations(testuser1Token)
+        expect(pendingInvitations).toHaveLength(1)
+
+        rejectedInvitation = pendingInvitations[0]
+    })
+
+    test('reject invitation to another personal should return 403', async () => {
+        await api
+            .post(`/api/invitation/${rejectedInvitation.id}/reject`)
+            .set('Authorization', 'Bearer ' + user1Token)
+            .expect(403)
+    })
+    test('reject valid invitation', async () => {
+        await api
+            .post(`/api/invitation/${rejectedInvitation.id}/reject`)
+            .set('Authorization', 'Bearer ' + testuser1Token)
+            .expect(200)
+
+        const checkedInvitation = await invitationModel.find({
+            id: rejectedInvitation.id,
+        })
+        expect(checkedInvitation).toBeNull()
     })
 })
 
