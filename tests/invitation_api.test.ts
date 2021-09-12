@@ -218,7 +218,7 @@ describe('Test accept connection', () => {
             .set('Authorization', 'Bearer ' + testuser2Token)
             .expect(200)
         const afterAcceptInvitation = await invitationModel.find({
-            id: testuser1Invitation.id,
+            id: testuser2Invitation.id,
         })
         expect(afterAcceptInvitation).toBeNull()
     })
