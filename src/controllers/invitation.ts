@@ -36,14 +36,9 @@ invitationRouter.post(
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
         const inviteeUsername = req.body.username
-        const apartmentId = req.body.apartmentId
 
-        if (!req.body.username || !req.body.apartmentId) {
-            return processClientError(
-                res,
-                400,
-                'Invitee username or apartment ID missing',
-            )
+        if (!req.body.username) {
+            return processClientError(res, 400, 'Invitee username is missing')
         }
 
         if (inviteeUsername === req.account.username)
@@ -61,24 +56,21 @@ invitationRouter.post(
                 )
             }
 
+            const apartment = await membershipModel.findApartment(req.account.id)
+
             // verify that invitor is actually a member in that apartment
-            if (
-                !(await membershipModel.isMemberOfApartment(
-                    req.account.id,
-                    apartmentId,
-                ))
-            ) {
+            if (apartment === null) {
                 return processClientError(
                     res,
                     404,
-                    'You are not the member or the apartment id does not exist',
+                    'You are not the member of any apartment',
                 )
             }
 
             const newInvitation = await invitationModel.create(
                 req.account.id,
                 invitee.id,
-                apartmentId,
+                apartment.id,
             )
             return res.status(201).json(newInvitation)
         } catch (err) {
@@ -94,7 +86,7 @@ invitationRouter.post(
     async (req: RequestAfterExtractor, res, next) => {
         const invitationId = Number(req.params.id)
         if (isNaN(invitationId)) {
-            return processClientError(res, 400, 'Apartment ID must be number')
+            return processClientError(res, 400, 'Invitation ID must be number')
         }
         try {
             const invitation = await invitationModel.find({

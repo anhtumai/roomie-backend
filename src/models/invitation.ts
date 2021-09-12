@@ -2,7 +2,7 @@ import { DisplayAccount } from './account'
 
 import { prisma } from './client'
 
-type PendingInvitation = {
+export type PendingInvitation = {
     id: number
     invitor: DisplayAccount
     invitee: DisplayAccount
