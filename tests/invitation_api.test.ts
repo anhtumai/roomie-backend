@@ -2,11 +2,14 @@ import supertest from 'supertest'
 
 import app from '../src/app'
 import { prisma } from '../src/models/client'
+
 import aprtmentModel from '../src/models/apartment'
 import invitationModel, { PendingInvitation } from '../src/models/invitation'
+import accountModel from '../src/models/account'
+import membershipModel from '../src/models/membership'
 
 import users from './users'
-import accountModel from '../src/models/account'
+import apartmentModel from '../src/models/apartment'
 
 const api = supertest(app)
 
@@ -36,14 +39,13 @@ async function getAllInvitations(token: string): Promise<PendingInvitation[]> {
 
 async function sendInvitation(
     invitorToken: string,
-    apartmentId: number,
     inviteeUsername: string,
 ): Promise<PendingInvitation> {
     const response = await api
         .post('/api/invitation')
         .set('Authorization', 'Bearer ' + invitorToken)
-        .send({ apartmentId, username: inviteeUsername })
-        .expect(200)
+        .send({ username: inviteeUsername })
+        .expect(201)
     return response.body
 }
 
@@ -169,6 +171,56 @@ describe('Test reject invitation', () => {
             id: rejectedInvitation.id,
         })
         expect(checkedInvitation).toBeNull()
+    })
+})
+
+describe('Test accept connection', () => {
+    let testuser1Invitation: PendingInvitation
+    let testuser2Invitation: PendingInvitation
+    let testuser3Invitation: PendingInvitation
+    test('Send invitations to all test users', async () => {
+        testuser1Invitation = await sendInvitation(user1Token, testuser1.username)
+        testuser2Invitation = await sendInvitation(user1Token, testuser2.username)
+        testuser3Invitation = await sendInvitation(user1Token, testuser3.username)
+    })
+    test('Accept invitation for other person', async () => {
+        await api
+            .post(`/api/invitation/${testuser1Invitation.id}/accept`)
+            .set('Authorization', 'Bearer ' + testuser2Token)
+            .expect(403)
+    })
+    test('Accept valid invitation', async () => {
+        await api
+            .post(`/api/invitation/${testuser1Invitation.id}/accept`)
+            .set('Authorization', 'Bearer ' + testuser1Token)
+            .expect(200)
+
+        const testUser1Id = testuser1Invitation.invitee.id
+        const apartmentId = testuser1Invitation.apartment.id
+        const isTestuse1Member = await membershipModel.isMemberOfApartment(
+            testUser1Id,
+            apartmentId,
+        )
+        expect(isTestuse1Member).toBeTruthy()
+
+        const afterAcceptInvitation = await invitationModel.find({
+            id: testuser1Invitation.id,
+        })
+        expect(afterAcceptInvitation).toBeNull()
+    })
+    test('All invitations to an invitee will be deleted if he accepts an invitation', async () => {
+        const secondTestuser2Invitation = await sendInvitation(
+            testuser1Token,
+            testuser2.username,
+        )
+        await api
+            .post(`/api/invitation/${secondTestuser2Invitation.id}/accept`)
+            .set('Authorization', 'Bearer ' + testuser2Token)
+            .expect(200)
+        const afterAcceptInvitation = await invitationModel.find({
+            id: testuser1Invitation.id,
+        })
+        expect(afterAcceptInvitation).toBeNull()
     })
 })
 
