@@ -69,10 +69,19 @@ async function update(
     return updatedTask
 }
 
+async function deleteOne(findParams: Record<any, any>): Promise<Task> {
+    const deletedTask = await prisma.task.delete({
+        where: findParams,
+    })
+
+    return deletedTask
+}
+
 export default {
     create,
     find,
     findMany,
     update,
     updateState,
+    deleteOne,
 }
