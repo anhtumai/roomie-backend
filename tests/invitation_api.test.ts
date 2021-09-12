@@ -34,6 +34,19 @@ async function getAllInvitations(token: string): Promise<PendingInvitation[]> {
     return response.body.data
 }
 
+async function sendInvitation(
+    invitorToken: string,
+    apartmentId: number,
+    inviteeUsername: string,
+): Promise<PendingInvitation> {
+    const response = await api
+        .post('/api/invitation')
+        .set('Authorization', 'Bearer ' + invitorToken)
+        .send({ apartmentId, username: inviteeUsername })
+        .expect(200)
+    return response.body
+}
+
 const user1 = users.find((user) => user.username === 'anhtumai')
 const testuser1 = users.find((user) => user.username === 'firsttestuser')
 const testuser2 = users.find((user) => user.username === 'secondtestuser')
@@ -96,15 +109,6 @@ describe('Test create apartment', () => {
 })
 
 describe('Test send invitation', () => {
-    let apartmentId = 0
-    test('Get current apartment', async () => {
-        const response = await api
-            .get('/api/apartment')
-            .set('Authorization', 'Bearer ' + user1Token)
-            .expect(200)
-        expect(response.body.data.name).toBe(apartmentName)
-        apartmentId = response.body.data.id
-    })
     test('Create invitation with missing information', async () => {
         await api
             .post('/api/invitation')
@@ -116,21 +120,21 @@ describe('Test send invitation', () => {
         await api
             .post('/api/invitation')
             .set('Authorization', 'Bearer ' + user1Token)
-            .send({ username: 'nonexistingusername', apartmentId })
+            .send({ username: 'nonexistingusername' })
             .expect(404)
     })
-    test('Create invitation with apartment you dont belong to', async () => {
+    test('Create invitation when you dont belong to any apartments', async () => {
         await api
             .post('/api/invitation')
             .set('Authorization', 'Bearer ' + testuser1Token)
-            .send({ username: 'anhtumai', apartmentId })
+            .send({ username: 'anhtumai' })
             .expect(404)
     })
     test('Create valid invitation for testuser1', async () => {
         const response = await api
             .post('/api/invitation')
             .set('Authorization', 'Bearer ' + user1Token)
-            .send({ username: testuser1.username, apartmentId })
+            .send({ username: testuser1.username })
             .expect(201)
         expect(response.body.invitor.username).toBe(user1.username)
 
