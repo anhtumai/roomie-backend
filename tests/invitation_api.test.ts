@@ -34,7 +34,7 @@ async function getAllInvitations(token: string): Promise<PendingInvitation[]> {
         .get('/api/invitation')
         .set('Authorization', 'Bearer ' + token)
         .expect(200)
-    return response.body.data
+    return response.body.invitations
 }
 
 async function sendInvitation(
@@ -75,12 +75,11 @@ beforeAll(async () => {
 })
 
 describe('Test create apartment', () => {
-    test('Get current apartment should return null', async () => {
+    test('Get current apartment should return 404 not found', async () => {
         const response = await api
             .get('/api/apartment')
             .set('Authorization', 'Bearer ' + user1Token)
-            .expect(200)
-        expect(response.body.data).toBeNull()
+            .expect(404)
     })
 
     test('Create new apartment', async () => {
@@ -95,11 +94,11 @@ describe('Test create apartment', () => {
             .set('Authorization', 'Bearer ' + user1Token)
             .send({ name: apartmentName })
             .expect(201)
-        expect(response.body.data.name).toEqual(apartmentName)
-        expect(typeof response.body.data.id).toBe('number')
+        expect(response.body.name).toEqual(apartmentName)
+        expect(typeof response.body.id).toBe('number')
 
         const savedApartment = await aprtmentModel.find({
-            id: response.body.data.id,
+            id: response.body.id,
         })
         const savedAccount = await accountModel.findDisplayAccount({
             id: savedApartment.adminId,
@@ -129,9 +128,10 @@ describe('Test send invitation', () => {
         await api
             .post('/api/invitation')
             .set('Authorization', 'Bearer ' + testuser1Token)
-            .send({ username: 'anhtumai' })
+            .send({ username: 'testuser2' })
             .expect(404)
     })
+
     test('Create valid invitation for testuser1', async () => {
         const response = await api
             .post('/api/invitation')
@@ -148,7 +148,7 @@ describe('Test send invitation', () => {
 
 describe('Test reject invitation', () => {
     let rejectedInvitation: PendingInvitation
-    test('testuse get all invitations', async () => {
+    test('get all invitations', async () => {
         const pendingInvitations = await getAllInvitations(testuser1Token)
         expect(pendingInvitations).toHaveLength(1)
 
@@ -221,6 +221,16 @@ describe('Test accept invitation', () => {
             id: testuser2Invitation.id,
         })
         expect(afterAcceptInvitation).toBeNull()
+    })
+})
+
+describe('Additional features', () => {
+    test('send invitation to a member of an apartment', async () => {
+        await api
+            .post('/api/invitation')
+            .set('Authorization', 'Bearer ' + testuser1Token)
+            .send({ username: user1.username })
+            .expect(400)
     })
 })
 
