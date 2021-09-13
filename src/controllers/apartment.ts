@@ -7,6 +7,7 @@ import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 import membershipModel from '../models/membership'
+import invitationModel from '../models/invitation'
 
 const apartmentRouter = Router()
 
@@ -16,8 +17,13 @@ apartmentRouter.get(
     async (req: RequestAfterExtractor, res, next) => {
         try {
             const apartment = await membershipModel.findApartment(req.account.id)
-
-            return res.status(200).json({ data: apartment })
+            if (apartment === null)
+                return processClientError(
+                    res,
+                    404,
+                    'This account is not member of any apartments',
+                )
+            return res.status(200).json(apartment)
         } catch (err) {
             logger.error(err)
             next(err)
@@ -38,7 +44,8 @@ apartmentRouter.post(
                 req.account.id,
             )
             await membershipModel.create(req.account.id, newApartment.id)
-            return res.status(201).json({ data: newApartment })
+            await invitationModel.deleteMany({ inviteeId: req.account.id })
+            return res.status(201).json(newApartment)
         } catch (err) {
             logger.error(err)
             if (err instanceof Prisma.PrismaClientKnownRequestError) {

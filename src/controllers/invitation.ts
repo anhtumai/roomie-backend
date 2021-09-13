@@ -23,7 +23,7 @@ invitationRouter.get(
                 queryInvitationsParams,
             )
 
-            return res.status(200).json({ data: pendingInvitations })
+            return res.status(200).json({ invitations: pendingInvitations })
         } catch (err) {
             logger.error(err)
             next(err)
@@ -56,21 +56,31 @@ invitationRouter.post(
                 )
             }
 
-            const apartment = await membershipModel.findApartment(req.account.id)
+            const invitorApartment = await membershipModel.findApartment(
+                req.account.id,
+            )
 
             // verify that invitor is actually a member in that apartment
-            if (apartment === null) {
+            if (invitorApartment === null) {
                 return processClientError(
                     res,
                     404,
-                    'You are not the member of any apartment',
+                    'You are not the member of any apartments',
                 )
             }
 
+            const inviteeApartment = await membershipModel.findApartment(invitee.id)
+            if (inviteeApartment !== null) {
+                return processClientError(
+                    res,
+                    400,
+                    `Invitee ${inviteeUsername} is currently member of an apartment`,
+                )
+            }
             const newInvitation = await invitationModel.create(
                 req.account.id,
                 invitee.id,
-                apartment.id,
+                invitorApartment.id,
             )
             return res.status(201).json(newInvitation)
         } catch (err) {
@@ -100,7 +110,9 @@ invitationRouter.post(
                 )
             }
             await invitationModel.deleteMany({ id: invitationId })
-            return res.status(200).json({ msg: `Reject invitation ${invitationId}` })
+            return res.status(200).json({
+                msg: `Reject invitation to ${invitation.apartment.name} from ${invitation.invitor.username}`,
+            })
         } catch (err) {
             logger.error(err)
             next(err)
@@ -132,7 +144,9 @@ invitationRouter.post(
             await membershipModel.create(req.account.id, invitation.apartment.id)
             await invitationModel.deleteMany({ inviteeId: req.account.id })
 
-            return res.status(200).json({ msg: `Accept invitation ${invitationId}` })
+            return res.status(200).json({
+                msg: `Accept invitation to ${invitation.apartment.name} from ${invitation.invitor.username}`,
+            })
         } catch (err) {
             logger.error(err)
             next(err)
