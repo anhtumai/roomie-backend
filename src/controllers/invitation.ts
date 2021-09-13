@@ -93,11 +93,10 @@ invitationRouter.post(
 invitationRouter.post(
     '/:id/reject',
     middleware.accountExtractor,
+    middleware.paramsIdValidator,
     async (req: RequestAfterExtractor, res, next) => {
         const invitationId = Number(req.params.id)
-        if (isNaN(invitationId)) {
-            return processClientError(res, 400, 'Invitation ID must be number')
-        }
+
         try {
             const invitation = await invitationModel.find({
                 id: invitationId,
@@ -123,11 +122,9 @@ invitationRouter.post(
 invitationRouter.post(
     '/:id/accept',
     middleware.accountExtractor,
+    middleware.paramsIdValidator,
     async (req: RequestAfterExtractor, res, next) => {
         const invitationId = Number(req.params.id)
-        if (isNaN(invitationId)) {
-            return processClientError(res, 400, 'Invitation ID must be number')
-        }
 
         try {
             const invitation = await invitationModel.find({
@@ -154,14 +151,12 @@ invitationRouter.post(
     },
 )
 
-invitationRouter.post(
-    '/:id/cancel',
+invitationRouter.delete(
+    '/:id',
     middleware.accountExtractor,
+    middleware.paramsIdValidator,
     async (req: RequestAfterExtractor, res, next) => {
         const invitationId = Number(req.params.id)
-        if (isNaN(invitationId)) {
-            return processClientError(res, 400, 'Invitation ID must be number')
-        }
 
         try {
             const invitation = await invitationModel.find({
@@ -174,7 +169,7 @@ invitationRouter.post(
                 return processClientError(
                     res,
                     403,
-                    'You are forbidden to cancel this invitation or this invitation does not exist',
+                    'You are forbidden to delete this invitation or this invitation does not exist',
                 )
             }
 

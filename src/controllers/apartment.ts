@@ -65,11 +65,10 @@ apartmentRouter.post(
 apartmentRouter.delete(
     '/:id',
     middleware.accountExtractor,
+    middleware.paramsIdValidator,
     async (req: RequestAfterExtractor, res, next) => {
         const id = Number(req.params.id)
-        if (isNaN(id)) {
-            return processClientError(res, 400, 'Apartment ID must be number')
-        }
+
         const { account } = req
 
         try {
