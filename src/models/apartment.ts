@@ -1,6 +1,41 @@
 import { Apartment } from '@prisma/client'
+import { Profile } from './account'
 
 import { prisma } from './client'
+
+type DisplayApartment = {
+    id: number
+    name: string
+    admin: Profile
+    members: Profile[]
+}
+
+async function findDisplayApartment(
+    findParams: Record<any, any>,
+): Promise<DisplayApartment | null> {
+    const displayApartment = await prisma.apartment.findFirst({
+        where: findParams,
+        select: {
+            id: true,
+            name: true,
+            admin: {
+                select: {
+                    id: true,
+                    username: true,
+                    name: true,
+                },
+            },
+            members: {
+                select: {
+                    id: true,
+                    username: true,
+                    name: true,
+                },
+            },
+        },
+    })
+    return displayApartment
+}
 
 async function find(
     findParams: Record<string, string | number>,
@@ -43,6 +78,7 @@ async function deleteAll(): Promise<void> {
 
 export default {
     find,
+    findDisplayApartment,
     create,
     deleteOne,
     deleteMany,

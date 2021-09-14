@@ -2,15 +2,42 @@ import { Account } from '@prisma/client'
 
 import { prisma } from './client'
 
-export type DisplayAccount = {
+export type Profile = {
     id: number
     username: string
     name: string
 }
 
+export type DisplayAccount = Profile & {
+    apartment: {
+        id: number
+        name: string
+    } | null
+}
+
 async function findDisplayAccount(
-    findParams: Record<string, string | number>,
+    findParams: Record<any, any>,
 ): Promise<DisplayAccount | null> {
+    const account = await prisma.account.findFirst({
+        where: findParams,
+        select: {
+            id: true,
+            username: true,
+            name: true,
+            apartment: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+        },
+    })
+    return account
+}
+
+async function findProfile(
+    findParams: Record<string, string | number>,
+): Promise<Profile | null> {
     const account = await prisma.account.findFirst({
         where: findParams,
         select: {
@@ -35,7 +62,7 @@ async function create(
     username: string,
     name: string,
     passwordHash: string,
-): Promise<DisplayAccount> {
+): Promise<Profile> {
     const newAccount = await prisma.account.create({
         data: {
             username,
@@ -70,6 +97,7 @@ async function deleteAll(): Promise<void> {
 export default {
     findAccount,
     findDisplayAccount,
+    findProfile,
     create,
     deleteOne,
     deleteMany,
