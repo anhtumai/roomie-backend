@@ -12,34 +12,28 @@ generator client {
 
 model Account {
 	@@map(name: "account")
-	id			Int				@id @default(autoincrement())
-	username	String			@unique @db.VarChar(30)
-	name		String			@db.VarChar(50)
-	password	String
+	id				Int				@id @default(autoincrement())
+	username		String			@unique @db.VarChar(30)
+	name			String			@db.VarChar(50)
+	password		String
 
-	apartment	Apartment?
-	memberships	Membership[]
-	invitors	Invitation[]	@relation("Invitor")
-	invitees	Invitation[]	@relation("Invitee")
+	apartment		Apartment?		@relation("Member", fields: [apartmentId], references: [id])
+	adminApartment	Apartment?		@relation("Admin")
+	apartmentId		Int?
+	invitors		Invitation[]	@relation("Invitor")
+	invitees		Invitation[]	@relation("Invitee")
+	tasks			Task[]			@relation("Creator")
 }
 
 model Apartment {
 	@@map(name: "apartment")
 	id			Int     @id @default(autoincrement())
 	name		String	@unique @db.VarChar(30)
-	admin		Account @relation(fields: [adminId], references: [id])
+	admin		Account @relation("Admin", fields: [adminId], references: [id])
 	adminId		Int
 
-	members		Membership[]
+	members		Account[]	@relation("Member")
 	invitations	Invitation[]
-}
-
-model Membership {
-	@@map(name: "membership")
-	member     Account	@relation(fields: [memberId], references: [id])
-	memberId   Int		@id
-	apartment   Apartment @relation(fields: [apartmentId], references: [id])
-	apartmentId Int
 }
 
 model Invitation {
@@ -57,17 +51,14 @@ model Invitation {
 model Task {
 	@@map(name: "task")
 	id			Int		@id	@default(autoincrement())
-	name		String	@unique	@db.VarChar(50)
+	name		String	@db.VarChar(50)
 	description	String	@db.VarChar(500)
 	frequency	Int
 	difficulty	Int
 	start		DateTime
 	end			DateTime
-	state		TaskType	@default(confirmed)	
+	creator		Account	@relation("Creator", fields: [creatorId], references: [id])
+	creatorId	Int
 }
 
-enum TaskType {
-	confirmed
-	pending
-	rejected
-}
+
