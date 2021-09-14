@@ -55,6 +55,18 @@ function tokenExtractor(
     next()
 }
 
+function paramsIdValidator(
+    request: Request,
+    response: Response,
+    next: NextFunction,
+): void | Response {
+    const id = Number(request.params.id)
+    if (isNaN(id)) {
+        return processClientError(response, 400, 'Param ID must be number')
+    }
+    next()
+}
+
 async function accountExtractor(
     request: RequestAfterExtractor,
     response: Response,
@@ -87,4 +99,5 @@ export default {
     unknownEndpoint,
     errorHandler,
     accountExtractor,
+    paramsIdValidator,
 }

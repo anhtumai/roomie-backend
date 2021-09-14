@@ -9,10 +9,10 @@ export type Profile = {
 }
 
 export type DisplayAccount = Profile & {
-    apartment: {
+    apartment?: {
         id: number
         name: string
-    } | null
+    }
 }
 
 async function findDisplayAccount(
@@ -78,6 +78,26 @@ async function create(
     }
 }
 
+async function update(
+    findParams: Record<any, any>,
+    updateParams: Record<any, any>,
+): Promise<void> {
+    await prisma.account.update({
+        where: findParams,
+        data: updateParams,
+    })
+}
+
+async function updateMany(
+    findParams: Record<any, any>,
+    updateParams: Record<any, any>,
+): Promise<void> {
+    await prisma.account.updateMany({
+        where: findParams,
+        data: updateParams,
+    })
+}
+
 async function deleteOne(deleteParams: Record<any, any>): Promise<void> {
     await prisma.account.delete({
         where: deleteParams,
@@ -99,6 +119,8 @@ export default {
     findDisplayAccount,
     findProfile,
     create,
+    update,
+    updateMany,
     deleteOne,
     deleteMany,
     deleteAll,

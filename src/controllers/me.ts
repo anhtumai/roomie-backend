@@ -16,6 +16,8 @@ meRouter.get(
             const displayAccount = await accountModel.findDisplayAccount({
                 id: req.account.id,
             })
+            console.log(displayAccount)
+            console.log(displayAccount.apartment)
             return res.status(200).json(displayAccount)
         } catch (err) {
             next(err)
@@ -31,7 +33,7 @@ meRouter.get(
             const { apartment } = await accountModel.findDisplayAccount({
                 id: req.account.id,
             })
-            if (apartment === null) return res.status(204)
+            if (apartment === null) return res.status(204).json()
             const apartmentId = apartment.id
 
             const displayApartment = await apartmentModel.findDisplayApartment({
@@ -43,3 +45,5 @@ meRouter.get(
         }
     },
 )
+
+export default meRouter

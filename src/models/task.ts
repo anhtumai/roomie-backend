@@ -6,18 +6,14 @@ export type TaskProperty = {
     description: string
     frequency: number
     difficulty: number
-    start: Date
-    end: Date
+    start: string
+    end: string
 }
 
-async function create({
-    name,
-    description,
-    frequency,
-    difficulty,
-    start,
-    end,
-}: TaskProperty): Promise<Task> {
+async function create(
+    { name, description, frequency, difficulty, start, end }: TaskProperty,
+    creatorId: number,
+): Promise<Task> {
     const task = await prisma.task.create({
         data: {
             name,
@@ -26,6 +22,7 @@ async function create({
             difficulty,
             start,
             end,
+            creatorId,
         },
     })
     return task
@@ -43,19 +40,6 @@ async function findMany(findParams: Record<any, any>): Promise<Task[]> {
         where: findParams,
     })
     return tasks
-}
-
-async function updateState(
-    findParams: Record<any, any>,
-    newState: 'rejected' | 'confirmed',
-): Promise<Task> {
-    const updatedTask = await prisma.task.update({
-        where: findParams,
-        data: {
-            state: newState,
-        },
-    })
-    return updatedTask
 }
 
 async function update(
@@ -82,6 +66,5 @@ export default {
     find,
     findMany,
     update,
-    updateState,
     deleteOne,
 }

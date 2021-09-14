@@ -1,11 +1,12 @@
 import { Router } from 'express'
 
-import invitationModel from '../models/invitation'
-import middleware from '../util/middleware'
-import logger from '../util/logger'
-import { RequestAfterExtractor } from '../types/express-middleware'
 import accountModel from '../models/account'
+import invitationModel from '../models/invitation'
+
+import middleware from '../util/middleware'
 import processClientError from '../util/error'
+
+import { RequestAfterExtractor } from '../types/express-middleware'
 
 const invitationsRouter = Router()
 
@@ -88,7 +89,6 @@ invitationsRouter.post(
                 msg: `Reject invitation to ${invitation.apartment.name} from ${invitation.invitor.username}`,
             })
         } catch (err) {
-            logger.error(err)
             next(err)
         }
     },
@@ -123,7 +123,6 @@ invitationsRouter.post(
                 msg: `Accept invitation to ${invitation.apartment.name} from ${invitation.invitor.username}`,
             })
         } catch (err) {
-            logger.error(err)
             next(err)
         }
     },
@@ -155,7 +154,6 @@ invitationsRouter.delete(
 
             return res.status(204).json()
         } catch (err) {
-            logger.error(err)
             next(err)
         }
     },
