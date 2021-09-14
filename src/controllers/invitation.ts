@@ -5,33 +5,11 @@ import middleware from '../util/middleware'
 import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import accountModel from '../models/account'
-import membershipModel from '../models/membership'
 import processClientError from '../util/error'
 
-const invitationRouter = Router()
+const invitationsRouter = Router()
 
-invitationRouter.get(
-    '/',
-    middleware.accountExtractor,
-    async (req: RequestAfterExtractor, res, next) => {
-        const accountId = req.account.id
-        const queryInvitationsParams = {
-            OR: [{ invitorId: accountId }, { inviteeId: accountId }],
-        }
-        try {
-            const pendingInvitations = await invitationModel.findMany(
-                queryInvitationsParams,
-            )
-
-            return res.status(200).json({ invitations: pendingInvitations })
-        } catch (err) {
-            logger.error(err)
-            next(err)
-        }
-    },
-)
-
-invitationRouter.post(
+invitationsRouter.post(
     '/',
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
@@ -45,6 +23,18 @@ invitationRouter.post(
             return processClientError(res, 400, 'You cannot invite yourself')
 
         try {
+            const invitor = await accountModel.findDisplayAccount({
+                id: req.account.id,
+            })
+            const invitorApartment = invitor.apartment
+
+            if (invitorApartment === null) {
+                return processClientError(
+                    res,
+                    404,
+                    'You are not the member of any apartments',
+                )
+            }
             const invitee = await accountModel.findDisplayAccount({
                 username: inviteeUsername,
             })
@@ -56,21 +46,7 @@ invitationRouter.post(
                 )
             }
 
-            const invitorApartment = await membershipModel.findApartment(
-                req.account.id,
-            )
-
-            // verify that invitor is actually a member in that apartment
-            if (invitorApartment === null) {
-                return processClientError(
-                    res,
-                    404,
-                    'You are not the member of any apartments',
-                )
-            }
-
-            const inviteeApartment = await membershipModel.findApartment(invitee.id)
-            if (inviteeApartment !== null) {
+            if (invitee.apartment !== null) {
                 return processClientError(
                     res,
                     400,
@@ -84,13 +60,12 @@ invitationRouter.post(
             )
             return res.status(201).json(newInvitation)
         } catch (err) {
-            logger.error(err)
             next(err)
         }
     },
 )
 
-invitationRouter.post(
+invitationsRouter.post(
     '/:id/reject',
     middleware.accountExtractor,
     middleware.paramsIdValidator,
@@ -108,7 +83,7 @@ invitationRouter.post(
                     'You are forbidden to reject this invitation or this invitation does not exist',
                 )
             }
-            await invitationModel.deleteMany({ id: invitationId })
+            await invitationModel.deleteOne({ id: invitationId })
             return res.status(200).json({
                 msg: `Reject invitation to ${invitation.apartment.name} from ${invitation.invitor.username}`,
             })
@@ -119,7 +94,7 @@ invitationRouter.post(
     },
 )
 
-invitationRouter.post(
+invitationsRouter.post(
     '/:id/accept',
     middleware.accountExtractor,
     middleware.paramsIdValidator,
@@ -138,7 +113,10 @@ invitationRouter.post(
                 )
             }
 
-            await membershipModel.create(req.account.id, invitation.apartment.id)
+            await accountModel.update(
+                { id: req.account.id },
+                { apartmentId: invitation.apartment.id },
+            )
             await invitationModel.deleteMany({ inviteeId: req.account.id })
 
             return res.status(200).json({
@@ -151,7 +129,7 @@ invitationRouter.post(
     },
 )
 
-invitationRouter.delete(
+invitationsRouter.delete(
     '/:id',
     middleware.accountExtractor,
     middleware.paramsIdValidator,
@@ -183,4 +161,4 @@ invitationRouter.delete(
     },
 )
 
-export default invitationRouter
+export default invitationsRouter
