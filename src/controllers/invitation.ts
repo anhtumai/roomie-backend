@@ -23,19 +23,14 @@ invitationsRouter.post(
         if (inviteeUsername === req.account.username)
             return processClientError(res, 400, 'You cannot invite yourself')
 
+        if (!req.account.apartment) {
+            return processClientError(
+                res,
+                404,
+                'You are not the member of any apartments',
+            )
+        }
         try {
-            const invitor = await accountModel.findDisplayAccount({
-                id: req.account.id,
-            })
-            const invitorApartment = invitor.apartment
-
-            if (invitorApartment === null) {
-                return processClientError(
-                    res,
-                    404,
-                    'You are not the member of any apartments',
-                )
-            }
             const invitee = await accountModel.findDisplayAccount({
                 username: inviteeUsername,
             })
@@ -57,7 +52,7 @@ invitationsRouter.post(
             const newInvitation = await invitationModel.create(
                 req.account.id,
                 invitee.id,
-                invitorApartment.id,
+                req.account.apartment.id,
             )
             return res.status(201).json(newInvitation)
         } catch (err) {
