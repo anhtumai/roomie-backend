@@ -8,14 +8,15 @@ import users from './users'
 
 const api = supertest(app)
 
+const user1 = users.find((user) => user.username === 'anhtumai')
+const testuser1 = users.find((user) => user.username === 'firsttestuser')
+
 beforeAll(async () => {
     await api.post('/api/testing/deleteAll')
 })
 
-describe('Test Authentication', () => {
-    const user1 = users.find((user) => user.username === 'anhtumai')
-    const testuser1 = users.find((user) => user.username === 'firsttestuser')
-    test('test register new user', async () => {
+describe('POST /api/register', () => {
+    test('register new user', async () => {
         const response = await api
             .post('/api/register')
             .send(user1)
@@ -33,30 +34,37 @@ describe('Test Authentication', () => {
         expect(savedUser.username).toEqual(user1.username)
         expect(savedUser.name).toEqual(user1.name)
     })
-    test('test login', async () => {
+
+    test('register with dupplicated username', async () => {
+        await api.post('/api/register').send(user1).expect(400)
+    })
+    test('register with missing information', async () => {
+        await api.post('/api/register').send({}).expect(400)
+    })
+})
+
+describe('POST /api/login', () => {
+    test('login with invalid credentials', async () => {
         await api
             .post('/api/login')
             .send({ username: testuser1.username, password: testuser1.password })
             .expect(401)
+    })
 
+    test('login with missing info', async () => {
         await api.post('/api/login').send({}).expect(400)
         await api
             .post('/api/login')
             .send({ password: 'anhtumaipassword' })
             .expect(400)
+    })
 
+    test('login with valid credentials', async () => {
         const validLoginResponse = await api
             .post('/api/login')
             .send({ username: user1.username, password: user1.password })
             .expect(200)
         expect(typeof validLoginResponse.body.token).toEqual('string')
-    })
-    test('invalid register', async () => {
-    // register dupplicate username
-        await api.post('/api/register').send(user1).expect(400)
-
-        // register missing information
-        await api.post('/api/register').send({}).expect(400)
     })
 })
 
