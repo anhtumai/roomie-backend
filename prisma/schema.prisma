@@ -23,6 +23,7 @@ model Account {
 	invitors		Invitation[]	@relation("Invitor")
 	invitees		Invitation[]	@relation("Invitee")
 	tasks			Task[]			@relation("Creator")
+	taskrequests	TaskRequest[]	@relation("RequestTo")
 }
 
 model Apartment {
@@ -59,6 +60,25 @@ model Task {
 	end			DateTime
 	creator		Account	@relation("Creator", fields: [creatorId], references: [id])
 	creatorId	Int
+
+	taskrequest	TaskRequest?	@relation("TaskRequest")
 }
 
+model TaskRequest {
+	@@map(name: "taskrequest")
+	id			Int		@id	@default(autoincrement())
 
+	assigner	Account	@relation("RequestTo", fields: [assignerId], references: [id])
+	assignerId	Int
+	
+	task		Task	@relation("TaskRequest", fields: [taskId], references: [id])
+	taskId		Int
+	
+	state		RequestType	@default(pending)
+}
+
+enum RequestType {
+	accepted
+	pending
+	rejected
+}
