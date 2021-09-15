@@ -1,6 +1,9 @@
 import { Router } from 'express'
+
 import accountModel from '../models/account'
 import apartmentModel from '../models/apartment'
+import invitationModel from '../models/invitation'
+
 import middleware from '../util/middleware'
 import processClientError from '../util/error'
 import logger from '../util/logger'
@@ -40,6 +43,27 @@ meRouter.get(
                 id: apartmentId,
             })
             return res.status(200).json(displayApartment)
+        } catch (err) {
+            next(err)
+        }
+    },
+)
+
+meRouter.get(
+    '/invitations',
+    middleware.accountExtractor,
+    async (req: RequestAfterExtractor, res, next) => {
+        try {
+            const sentInvitations = await invitationModel.findMany({
+                invitorId: req.account.id,
+            })
+            const receivedInvitations = await invitationModel.findMany({
+                inviteeId: req.account.id,
+            })
+            return res.status(200).json({
+                sent: sentInvitations,
+                received: receivedInvitations,
+            })
         } catch (err) {
             next(err)
         }
