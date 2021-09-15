@@ -61,7 +61,7 @@ model Task {
 	creator		Account	@relation("Creator", fields: [creatorId], references: [id])
 	creatorId	Int
 
-	taskrequest	TaskRequest?	@relation("TaskRequest")
+	taskrequest	TaskRequest[]	@relation("TaskRequest")
 }
 
 model TaskRequest {

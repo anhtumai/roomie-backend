@@ -1,29 +1,11 @@
-import { Task } from '@prisma/client'
+import { Task, Prisma } from '@prisma/client'
 import { prisma } from './client'
 
-export type TaskProperty = {
-    name: string
-    description: string
-    frequency: number
-    difficulty: number
-    start: string
-    end: string
-}
-
 async function create(
-    { name, description, frequency, difficulty, start, end }: TaskProperty,
-    creatorId: number,
+    dataParams: Prisma.TaskUncheckedCreateInput,
 ): Promise<Task> {
     const task = await prisma.task.create({
-        data: {
-            name,
-            description,
-            frequency,
-            difficulty,
-            start,
-            end,
-            creatorId,
-        },
+        data: dataParams,
     })
     return task
 }

@@ -5,7 +5,7 @@ import loginRouter from './controllers/login'
 import registerRouter from './controllers/register'
 import apartmentsRouter from './controllers/apartment'
 import invitationsRouter from './controllers/invitation'
-import testingRouter from './controllers/testing'
+import tasksRouter from './controllers/task'
 
 import middleware from './util/middleware'
 
@@ -20,7 +20,7 @@ app.use('/api/apartments', apartmentsRouter)
 app.use('/api/login', loginRouter)
 app.use('/api/register', registerRouter)
 app.use('/api/invitations', invitationsRouter)
-app.use('/api/testing', testingRouter)
+app.use('/api/tasks', tasksRouter)
 
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)

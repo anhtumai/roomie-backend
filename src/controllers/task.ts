@@ -1,18 +1,23 @@
 import { Router } from 'express'
 
-import taskModel, { TaskProperty } from '../models/task'
-import membershipModel from '../models/membership'
+import _ from 'lodash'
+
+import taskModel from '../models/task'
+
 import middleware from '../util/middleware'
 import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 import { isNaN } from 'lodash'
+import accountModel, { DisplayAccount } from '../models/account'
+import taskRequestModel from '../models/taskRequest'
 
-const taskRouter = Router()
+import { Prisma } from '@prisma/client'
 
-function validateTaskProperty(taskProperty: TaskProperty): boolean {
+const tasksRouter = Router()
+
+function validateTaskProperty(taskProperty: any): boolean {
     const { name, description, frequency, difficulty, start, end } = taskProperty
-
     if (typeof name !== 'string') return false
     if (typeof description !== 'string') return false
     if (typeof frequency !== 'number') return false
@@ -22,27 +27,69 @@ function validateTaskProperty(taskProperty: TaskProperty): boolean {
     return true
 }
 
-taskRouter.get(
-    '/',
-    middleware.accountExtractor,
-    async (req: RequestAfterExtractor, res, next) => {
-        return
-    },
-)
+function parseTaskProperty(
+    taskProperty: any,
+): Omit<Prisma.TaskUncheckedCreateInput, 'creatorId'> {
+    const { name, description, frequency, difficulty, start, end } = taskProperty
 
-taskRouter.post(
+    return {
+        name,
+        description,
+        frequency,
+        difficulty,
+        start: new Date(start),
+        end: new Date(end),
+    }
+}
+
+tasksRouter.post(
     '/',
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
-        const taskProperty: TaskProperty = req.body
-        if (!validateTaskProperty(taskProperty)) {
+        if (!validateTaskProperty(req.body)) {
             return processClientError(res, 400, 'Task property is invalid')
+        }
+        const taskProperty = parseTaskProperty(req.body)
+
+        const assignerUsernames: string[] = req.body.assigners
+
+        if (!Array.isArray(assignerUsernames) || assignerUsernames.length == 0) {
+            return processClientError(res, 400, 'List of assigners is missing')
+        }
+
+        if (!assignerUsernames.every((i) => typeof i === 'string')) {
+            return processClientError(res, 400, 'List of assigners is invalid')
+        }
+
+        const assigners: (DisplayAccount | null)[] = await Promise.all(
+            assignerUsernames.map(async (username) => {
+                const displayAccount = await accountModel.findDisplayAccount({
+                    username,
+                })
+                return displayAccount
+            }),
+        )
+        const incompliantUsernames = _.zip(assignerUsernames, assigners)
+            .filter((params) => {
+                const displayAccount = params[1]
+                if (!displayAccount) return true
+                if (!displayAccount.apartment) return true
+                if (displayAccount.apartment.id !== req.account.apartment.id)
+                    return true
+                return false
+            })
+            .map((params) => params[0])
+
+        if (incompliantUsernames.length > 0) {
+            return processClientError(
+                res,
+                400,
+                `These usernames: ${incompliantUsernames.join()} do not exist or are not member of this apartment`,
+            )
         }
 
         try {
-            const apartment = await membershipModel.findApartment(req.account.id)
-
-            if (apartment === null) {
+            if (!req.account.apartment) {
                 return processClientError(
                     res,
                     400,
@@ -50,16 +97,25 @@ taskRouter.post(
                 )
             }
 
-            const updatedTask = await taskModel.create(taskProperty, req.account.id)
-            return res.json(201).json(updatedTask)
+            const updatedTask = await taskModel.create({
+                ...taskProperty,
+                creatorId: req.account.id,
+            })
+
+            const taskRequestCreateData = assigners.map((displayAccount) => ({
+                assignerId: displayAccount.id,
+                taskId: updatedTask.id,
+            }))
+            await taskRequestModel.createMany(taskRequestCreateData)
+
+            return res.status(201).json(updatedTask)
         } catch (err) {
-            logger.error(err)
             next(err)
         }
     },
 )
 
-taskRouter.put(
+tasksRouter.put(
     '/:id',
     middleware.accountExtractor,
     middleware.paramsIdValidator,
@@ -86,7 +142,7 @@ taskRouter.put(
     },
 )
 
-taskRouter.delete(
+tasksRouter.delete(
     '/:id',
     middleware.accountExtractor,
     middleware.paramsIdValidator,
@@ -109,3 +165,5 @@ taskRouter.delete(
         }
     },
 )
+
+export default tasksRouter
