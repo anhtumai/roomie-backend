@@ -2,7 +2,7 @@ import supertest, { SuperTest } from 'supertest'
 
 import accountModel from '../src/models/account'
 import apartmentModel from '../src/models/apartment'
-import invitationModel from '../src/models/invitation'
+import invitationModel, { PendingInvitation } from '../src/models/invitation'
 
 async function deleteAll(): Promise<void> {
     await invitationModel.deleteAll()
@@ -33,8 +33,22 @@ async function login(
     return response.body.token
 }
 
+async function sendInvitation(
+    api: SuperTest<supertest.Test>,
+    invitorToken: string,
+    inviteeUsername: string,
+): Promise<PendingInvitation> {
+    const response = await api
+        .post('/api/invitations')
+        .set('Authorization', 'Bearer ' + invitorToken)
+        .send({ username: inviteeUsername })
+        .expect(201)
+    return response.body
+}
+
 export default {
     deleteAll,
     registerUser,
     login,
+    sendInvitation,
 }

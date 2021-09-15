@@ -5,7 +5,7 @@ import { prisma } from '../src/models/client'
 
 import accountModel from '../src/models/account'
 import apartmentModel from '../src/models/apartment'
-import invitationModel from '../src/models/invitation'
+import invitationModel, { PendingInvitation } from '../src/models/invitation'
 
 import utils from './utils'
 import users from './users'
@@ -145,6 +145,96 @@ describe('GET /api/me/invitations', () => {
             .set('Authorization', 'Bearer ' + testuser1Token)
             .expect(200)
         expect(inviteeResponse.body.received).toHaveLength(1)
+    })
+})
+
+describe('POST /api/invitations/:id/reject', () => {
+    let toRejectInvitation: PendingInvitation
+    test('get received invitation', async () => {
+        const allInvitationsResponse = await api
+            .get('/api/me/invitations')
+            .set('Authorization', 'Bearer ' + testuser1Token)
+            .expect(200)
+        toRejectInvitation = allInvitationsResponse.body.received[0]
+    })
+
+    test('reject invitation to another personal should return 403', async () => {
+        await api
+            .post(`/api/invitations/${toRejectInvitation.id}/reject`)
+            .set('Authorization', 'Bearer ' + user1Token)
+            .expect(403)
+    })
+    test('reject valid invitation', async () => {
+        await api
+            .post(`/api/invitations/${toRejectInvitation.id}/reject`)
+            .set('Authorization', 'Bearer ' + testuser1Token)
+            .expect(200)
+
+        const checkedInvitation = await invitationModel.find({
+            id: toRejectInvitation.id,
+        })
+        expect(checkedInvitation).toBeNull()
+    })
+})
+
+describe('POST /api/invitations/:id/accept', () => {
+    let testuser1Invitation: PendingInvitation
+    let testuser2Invitation: PendingInvitation
+    let testuser3Invitation: PendingInvitation
+    test('Send invitations to all test users', async () => {
+        testuser1Invitation = await utils.sendInvitation(
+            api,
+            user1Token,
+            testuser1.username,
+        )
+        testuser2Invitation = await utils.sendInvitation(
+            api,
+            user1Token,
+            testuser2.username,
+        )
+        testuser3Invitation = await utils.sendInvitation(
+            api,
+            user1Token,
+            testuser3.username,
+        )
+    })
+    test('accept invitation for other person should return 403', async () => {
+        await api
+            .post(`/api/invitations/${testuser1Invitation.id}/accept`)
+            .set('Authorization', 'Bearer ' + testuser2Token)
+            .expect(403)
+    })
+    test('accept valid invitation', async () => {
+        await api
+            .post(`/api/invitations/${testuser1Invitation.id}/accept`)
+            .set('Authorization', 'Bearer ' + testuser1Token)
+            .expect(200)
+
+        const testuser1Id = testuser1Invitation.invitee.id
+        const testuser1DisplayAccount = await accountModel.findDisplayAccount({
+            id: testuser1Id,
+        })
+        expect(testuser1DisplayAccount.apartment.name).toEqual(apartmentName)
+
+        const afterAcceptInvitation = await invitationModel.find({
+            id: testuser1Invitation.id,
+        })
+        expect(afterAcceptInvitation).toBeNull()
+    })
+    test('all invitations to an invitee will be deleted if he accepts an invitation', async () => {
+        const secondTestuser2Invitation = await utils.sendInvitation(
+            api,
+            testuser1Token,
+            testuser2.username,
+        )
+        await api
+            .post(`/api/invitations/${secondTestuser2Invitation.id}/accept`)
+            .set('Authorization', 'Bearer ' + testuser2Token)
+            .expect(200)
+        const afterAcceptInvitation = await invitationModel.find({
+            id: testuser2Invitation.id,
+        })
+        expect(afterAcceptInvitation).toBeNull()
     })
 })
 
