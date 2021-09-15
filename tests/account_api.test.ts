@@ -1,9 +1,11 @@
 import supertest from 'supertest'
 
 import app from '../src/app'
+
 import { prisma } from '../src/models/client'
 import accountModel from '../src/models/account'
 
+import utils from './utils'
 import users from './users'
 
 const api = supertest(app)
@@ -12,7 +14,7 @@ const user1 = users.find((user) => user.username === 'anhtumai')
 const testuser1 = users.find((user) => user.username === 'firsttestuser')
 
 beforeAll(async () => {
-    await api.post('/api/testing/deleteAll')
+    await utils.deleteAll()
 })
 
 describe('POST /api/register', () => {
