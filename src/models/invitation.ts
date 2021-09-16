@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { DisplayAccount } from './account'
 
 import { prisma } from './client'
@@ -50,9 +51,11 @@ async function create(
     return newInvitation
 }
 
-async function find(findParams: Record<any, any>): Promise<PendingInvitation> {
+async function find(
+    whereParams: Prisma.InvitationWhereUniqueInput,
+): Promise<PendingInvitation> {
     const invitation = await prisma.invitation.findFirst({
-        where: findParams,
+        where: whereParams,
         select: {
             id: true,
             invitor: {
@@ -81,10 +84,10 @@ async function find(findParams: Record<any, any>): Promise<PendingInvitation> {
 }
 
 async function findMany(
-    findParams: Record<any, any>,
+    whereParams: Prisma.InvitationWhereInput,
 ): Promise<PendingInvitation[]> {
     const invitations = await prisma.invitation.findMany({
-        where: findParams,
+        where: whereParams,
         orderBy: {
             id: 'asc',
         },
@@ -115,14 +118,16 @@ async function findMany(
     return invitations
 }
 
-async function deleteOne(deleteParams: Record<any, any>): Promise<void> {
+async function deleteOne(
+    whereParams: Prisma.InvitationWhereUniqueInput,
+): Promise<void> {
     await prisma.invitation.delete({
-        where: deleteParams,
+        where: whereParams,
     })
 }
 
 async function deleteMany(
-    deleteParams: Record<string, string | number>,
+    deleteParams: Prisma.InvitationWhereInput,
 ): Promise<number> {
     const deletedInvitations = await prisma.invitation.deleteMany({
         where: deleteParams,

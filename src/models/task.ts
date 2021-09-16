@@ -10,34 +10,38 @@ async function create(
     return task
 }
 
-async function find(findParams: Record<any, any>): Promise<Task | null> {
+async function find(
+    whereParams: Prisma.TaskWhereUniqueInput,
+): Promise<Task | null> {
     const task = await prisma.task.findFirst({
-        where: findParams,
+        where: whereParams,
     })
     return task
 }
 
-async function findMany(findParams: Record<any, any>): Promise<Task[]> {
+async function findMany(whereParams: Prisma.TaskWhereInput): Promise<Task[]> {
     const tasks = await prisma.task.findMany({
-        where: findParams,
+        where: whereParams,
     })
     return tasks
 }
 
 async function update(
-    findParams: Record<any, any>,
-    updateData: Record<any, any>,
+    whereParams: Prisma.TaskWhereUniqueInput,
+    dataParams: Prisma.TaskUncheckedUpdateInput,
 ): Promise<Task> {
     const updatedTask = await prisma.task.update({
-        where: findParams,
-        data: updateData,
+        where: whereParams,
+        data: dataParams,
     })
     return updatedTask
 }
 
-async function deleteOne(findParams: Record<any, any>): Promise<Task> {
+async function deleteOne(
+    whereParams: Prisma.TaskWhereUniqueInput,
+): Promise<Task> {
     const deletedTask = await prisma.task.delete({
-        where: findParams,
+        where: whereParams,
     })
 
     return deletedTask

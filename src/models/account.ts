@@ -1,4 +1,4 @@
-import { Account } from '@prisma/client'
+import { Account, Prisma } from '@prisma/client'
 
 import { prisma } from './client'
 
@@ -16,10 +16,10 @@ export type DisplayAccount = Profile & {
 }
 
 async function findDisplayAccount(
-    findParams: Record<any, any>,
+    whereParams: Prisma.AccountWhereInput,
 ): Promise<DisplayAccount | null> {
     const account = await prisma.account.findFirst({
-        where: findParams,
+        where: whereParams,
         select: {
             id: true,
             username: true,
@@ -36,10 +36,10 @@ async function findDisplayAccount(
 }
 
 async function findProfile(
-    findParams: Record<string, string | number>,
+    whereParams: Prisma.AccountWhereInput,
 ): Promise<Profile | null> {
     const account = await prisma.account.findFirst({
-        where: findParams,
+        where: whereParams,
         select: {
             id: true,
             username: true,
@@ -50,10 +50,10 @@ async function findProfile(
 }
 
 async function findAccount(
-    findParams: Record<string, string | number>,
+    whereParams: Prisma.AccountWhereInput,
 ): Promise<Account | null> {
     const account = await prisma.account.findFirst({
-        where: findParams,
+        where: whereParams,
     })
     return account
 }
@@ -79,34 +79,38 @@ async function create(
 }
 
 async function update(
-    findParams: Record<any, any>,
-    updateParams: Record<any, any>,
+    whereParams: Prisma.AccountWhereUniqueInput,
+    dataParams: Prisma.AccountUncheckedUpdateInput,
 ): Promise<void> {
     await prisma.account.update({
-        where: findParams,
-        data: updateParams,
+        where: whereParams,
+        data: dataParams,
     })
 }
 
 async function updateMany(
-    findParams: Record<any, any>,
-    updateParams: Record<any, any>,
+    whereParams: Prisma.AccountWhereInput,
+    dataParams: Prisma.AccountUncheckedUpdateInput,
 ): Promise<void> {
     await prisma.account.updateMany({
-        where: findParams,
-        data: updateParams,
+        where: whereParams,
+        data: dataParams,
     })
 }
 
-async function deleteOne(deleteParams: Record<any, any>): Promise<void> {
+async function deleteOne(
+    whereParams: Prisma.AccountWhereUniqueInput,
+): Promise<void> {
     await prisma.account.delete({
-        where: deleteParams,
+        where: whereParams,
     })
 }
 
-async function deleteMany(deleteParams: Record<any, any>): Promise<void> {
+async function deleteMany(
+    whereParams: Prisma.AccountWhereInput,
+): Promise<void> {
     await prisma.account.deleteMany({
-        where: deleteParams,
+        where: whereParams,
     })
 }
 

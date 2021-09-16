@@ -1,4 +1,4 @@
-import { Apartment } from '@prisma/client'
+import { Apartment, Prisma } from '@prisma/client'
 import { Profile } from './account'
 
 import { prisma } from './client'
@@ -11,10 +11,10 @@ type DisplayApartment = {
 }
 
 async function findDisplayApartment(
-    findParams: Record<any, any>,
+    whereParams: Prisma.ApartmentWhereInput,
 ): Promise<DisplayApartment | null> {
     const displayApartment = await prisma.apartment.findFirst({
-        where: findParams,
+        where: whereParams,
         select: {
             id: true,
             name: true,
@@ -38,10 +38,10 @@ async function findDisplayApartment(
 }
 
 async function find(
-    findParams: Record<string, string | number>,
+    whereParams: Prisma.ApartmentWhereInput,
 ): Promise<Apartment | null> {
     const apartment = await prisma.apartment.findFirst({
-        where: findParams,
+        where: whereParams,
     })
     return apartment
 }
@@ -60,15 +60,19 @@ async function create(name: string, adminId: number): Promise<Apartment> {
     return newApartment
 }
 
-async function deleteOne(deleteParams: Record<any, any>): Promise<void> {
+async function deleteOne(
+    whereParams: Prisma.ApartmentWhereUniqueInput,
+): Promise<void> {
     await prisma.apartment.delete({
-        where: deleteParams,
+        where: whereParams,
     })
 }
 
-async function deleteMany(deleteParams: Record<any, any>): Promise<void> {
+async function deleteMany(
+    whereParams: Prisma.ApartmentWhereInput,
+): Promise<void> {
     await prisma.apartment.deleteMany({
-        where: deleteParams,
+        where: whereParams,
     })
 }
 
