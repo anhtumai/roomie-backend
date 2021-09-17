@@ -85,6 +85,26 @@ async function findMany(
     return taskrequests
 }
 
+async function findDisplayRequest(
+    whereParams: Prisma.TaskRequestWhereUniqueInput,
+): Promise<DisplayRequest | null> {
+    const displayRequest = await prisma.taskRequest.findUnique({
+        where: whereParams,
+        select: {
+            id: true,
+            state: true,
+            assigner: {
+                select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                },
+            },
+        },
+    })
+    return displayRequest
+}
+
 async function findResponseTaskRequests(
     memberIds: number[],
 ): Promise<ResponseTaskRequest[]> {
@@ -128,6 +148,7 @@ async function updateMany(
 }
 
 export default {
+    findDisplayRequest,
     findMany,
     findResponseTaskRequests,
     createMany,

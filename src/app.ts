@@ -6,6 +6,7 @@ import registerRouter from './controllers/register'
 import apartmentsRouter from './controllers/apartment'
 import invitationsRouter from './controllers/invitation'
 import tasksRouter from './controllers/task'
+import taskRequestRouter from './controllers/taskRequest'
 
 import middleware from './util/middleware'
 
@@ -21,6 +22,7 @@ app.use('/api/login', loginRouter)
 app.use('/api/register', registerRouter)
 app.use('/api/invitations', invitationsRouter)
 app.use('/api/tasks', tasksRouter)
+app.use('/api/taskrequests', taskRequestRouter)
 
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)

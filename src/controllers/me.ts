@@ -8,7 +8,7 @@ import middleware from '../util/middleware'
 import processClientError from '../util/error'
 import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
-import taskRequest from '../models/taskRequest'
+import taskRequestModel from '../models/taskRequest'
 
 const meRouter = Router()
 
@@ -37,9 +37,8 @@ meRouter.get(
                 id: apartmentId,
             })
             const memberIds = displayApartment.members.map((member) => member.id)
-            const responseTaskRequests = await taskRequest.findResponseTaskRequests(
-                memberIds,
-            )
+            const responseTaskRequests =
+        await taskRequestModel.findResponseTaskRequests(memberIds)
             return res.status(200).json({
                 ...displayApartment,
                 taskRequests: responseTaskRequests,
