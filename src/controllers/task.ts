@@ -8,7 +8,6 @@ import middleware from '../util/middleware'
 import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
-import { isNaN } from 'lodash'
 import accountModel, { DisplayAccount } from '../models/account'
 import taskRequestModel from '../models/taskRequest'
 
