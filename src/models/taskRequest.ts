@@ -10,58 +10,43 @@ export type QueryTaskRequest = {
     task: Task
 }
 
-type DisplayTaskRequest = Task & {
-    pendingBy: Profile[]
-    acceptedBy: Profile[]
-    rejectedBy: Profile[]
+type DisplayRequest = {
+    id: number
+    state: RequestType
+    assigner: Profile
 }
 
-function toDisplayTaskRequest(
-    inputs: QueryTaskRequest[],
-): DisplayTaskRequest[] {
-    const taskMap: Map<number, Task> = new Map()
-    const pendingByMap: Map<number, Profile[]> = new Map()
-    const acceptedByMap: Map<number, Profile[]> = new Map()
-    const rejectedByMap: Map<number, Profile[]> = new Map()
+type ResponseTaskRequest = {
+    task: Task
+    requests: DisplayRequest[]
+}
 
-    for (const request of inputs) {
-        const taskId = request.task.id
+function toResponseTaskRequest(
+    inputs: QueryTaskRequest[],
+): ResponseTaskRequest[] {
+    const taskMap: Map<number, Task> = new Map()
+    const requestsMap: Map<number, DisplayRequest[]> = new Map()
+
+    for (const queryRequest of inputs) {
+        const taskId = queryRequest.task.id
         if (!taskMap.has(taskId)) {
-            taskMap.set(taskId, request.task)
-            pendingByMap.set(taskId, [])
-            acceptedByMap.set(taskId, [])
-            rejectedByMap.set(taskId, [])
+            taskMap.set(taskId, queryRequest.task)
+            requestsMap.set(taskId, [])
         }
-        switch (request.state) {
-            case 'pending': {
-                const updatedPendingBy = [...pendingByMap.get(taskId), request.assigner]
-                pendingByMap.set(taskId, updatedPendingBy)
-                break
-            }
-            case 'accepted': {
-                const updatedAcceptedBy = [
-                    ...acceptedByMap.get(taskId),
-                    request.assigner,
-                ]
-                acceptedByMap.set(taskId, updatedAcceptedBy)
-                break
-            }
-            case 'rejected': {
-                const updatedRejectedBy = [
-                    ...rejectedByMap.get(taskId),
-                    request.assigner,
-                ]
-                rejectedByMap.set(taskId, updatedRejectedBy)
-                break
-            }
-        }
+        const updatedDisplayRequests = [
+            ...requestsMap.get(taskId),
+            {
+                id: queryRequest.id,
+                state: queryRequest.state,
+                assigner: queryRequest.assigner,
+            },
+        ]
+        requestsMap.set(taskId, updatedDisplayRequests)
     }
 
     return Array.from(taskMap.keys()).map((taskId) => ({
-        ...taskMap.get(taskId),
-        pendingBy: pendingByMap.get(taskId),
-        acceptedBy: acceptedByMap.get(taskId),
-        rejectedBy: rejectedByMap.get(taskId),
+        task: taskMap.get(taskId),
+        requests: requestsMap.get(taskId),
     }))
 }
 
@@ -100,14 +85,14 @@ async function findMany(
     return taskrequests
 }
 
-async function findDisplayTaskRequests(
+async function findResponseTaskRequests(
     memberIds: number[],
-): Promise<DisplayTaskRequest[]> {
+): Promise<ResponseTaskRequest[]> {
     const assignerIdsParams = memberIds.map((id) => ({
         assigner_id: id,
     }))
     const taskrequests = await findMany({ OR: assignerIdsParams })
-    return toDisplayTaskRequest(taskrequests)
+    return toResponseTaskRequest(taskrequests)
 }
 
 async function createMany(
@@ -144,7 +129,7 @@ async function updateMany(
 
 export default {
     findMany,
-    findDisplayTaskRequests,
+    findResponseTaskRequests,
     createMany,
     update,
     updateMany,

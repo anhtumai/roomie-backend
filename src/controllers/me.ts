@@ -37,14 +37,12 @@ meRouter.get(
                 id: apartmentId,
             })
             const memberIds = displayApartment.members.map((member) => member.id)
-            const displayTaskRequests = await taskRequest.findDisplayTaskRequests(
+            const responseTaskRequests = await taskRequest.findResponseTaskRequests(
                 memberIds,
             )
             return res.status(200).json({
                 ...displayApartment,
-                tasks: {
-                    requests: displayTaskRequests,
-                },
+                taskRequests: responseTaskRequests,
             })
         } catch (err) {
             next(err)
