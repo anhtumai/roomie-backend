@@ -110,9 +110,9 @@ invitationsRouter.post(
 
             await accountModel.update(
                 { id: req.account.id },
-                { apartmentId: invitation.apartment.id },
+                { apartment_id: invitation.apartment.id },
             )
-            await invitationModel.deleteMany({ inviteeId: req.account.id })
+            await invitationModel.deleteMany({ invitee_id: req.account.id })
 
             return res.status(200).json({
                 msg: `Accept invitation to ${invitation.apartment.name} from ${invitation.invitor.username}`,

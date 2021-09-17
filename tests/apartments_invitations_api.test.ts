@@ -77,7 +77,7 @@ describe('POST /api/apartments', () => {
             id: response.body.id,
         })
         const savedAccount = await accountModel.findDisplayAccount({
-            id: savedApartment.adminId,
+            id: savedApartment.admin_id,
         })
 
         expect(savedAccount.name).toBe(user1.name)

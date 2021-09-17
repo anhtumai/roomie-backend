@@ -48,10 +48,10 @@ meRouter.get(
     async (req: RequestAfterExtractor, res, next) => {
         try {
             const sentInvitations = await invitationModel.findMany({
-                invitorId: req.account.id,
+                invitor_id: req.account.id,
             })
             const receivedInvitations = await invitationModel.findMany({
-                inviteeId: req.account.id,
+                invitee_id: req.account.id,
             })
             return res.status(200).json({
                 sent: sentInvitations,

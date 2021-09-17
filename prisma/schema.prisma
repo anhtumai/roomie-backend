@@ -17,9 +17,9 @@ model Account {
 	name			String			@db.VarChar(50)
 	password		String
 
-	apartment		Apartment?		@relation("Member", fields: [apartmentId], references: [id])
+	apartment		Apartment?		@relation("Member", fields: [apartment_id], references: [id])
 	adminApartment	Apartment?		@relation("Admin")
-	apartmentId		Int?
+	apartment_id		Int?
 	invitors		Invitation[]	@relation("Invitor")
 	invitees		Invitation[]	@relation("Invitee")
 	tasks			Task[]			@relation("Creator")
@@ -30,8 +30,8 @@ model Apartment {
 	@@map(name: "apartment")
 	id			Int     @id @default(autoincrement())
 	name		String	@unique @db.VarChar(30)
-	admin		Account @relation("Admin", fields: [adminId], references: [id])
-	adminId		Int
+	admin		Account @relation("Admin", fields: [admin_id], references: [id])
+	admin_id		Int
 
 	members		Account[]	@relation("Member")
 	invitations	Invitation[]
@@ -40,13 +40,13 @@ model Apartment {
 model Invitation {
 	@@map(name: "invitation")
 	id          Int       @id @default(autoincrement())
-	invitor		Account		@relation("Invitor", fields: [invitorId], references: [id])
-	invitorId	Int
-	invitee		Account		@relation("Invitee", fields: [inviteeId], references: [id])
-	inviteeId	Int
-	apartment	Apartment	@relation(fields: [apartmentId], references: [id])
-	apartmentId	Int
-	@@unique(fields: [invitorId, inviteeId])
+	invitor		Account		@relation("Invitor", fields: [invitor_id], references: [id])
+	invitor_id	Int
+	invitee		Account		@relation("Invitee", fields: [invitee_id], references: [id])
+	invitee_id	Int
+	apartment	Apartment	@relation(fields: [apartment_id], references: [id])
+	apartment_id	Int
+	@@unique(fields: [invitor_id, invitee_id])
 }
 
 model Task {
@@ -58,8 +58,8 @@ model Task {
 	difficulty	Int
 	start		DateTime
 	end			DateTime
-	creator		Account	@relation("Creator", fields: [creatorId], references: [id])
-	creatorId	Int
+	creator		Account	@relation("Creator", fields: [creator_id], references: [id])
+	creator_id	Int
 
 	taskrequest	TaskRequest[]	@relation("TaskRequest")
 }
@@ -68,11 +68,11 @@ model TaskRequest {
 	@@map(name: "taskrequest")
 	id			Int		@id	@default(autoincrement())
 
-	assigner	Account	@relation("RequestTo", fields: [assignerId], references: [id])
-	assignerId	Int
+	assigner	Account	@relation("RequestTo", fields: [assigner_id], references: [id])
+	assigner_id	Int
 	
-	task		Task	@relation("TaskRequest", fields: [taskId], references: [id])
-	taskId		Int
+	task		Task	@relation("TaskRequest", fields: [task_id], references: [id])
+	task_id		Int
 	
 	state		RequestType	@default(pending)
 }

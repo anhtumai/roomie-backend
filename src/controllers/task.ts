@@ -29,7 +29,7 @@ function validateTaskProperty(taskProperty: any): boolean {
 
 function parseTaskProperty(
     taskProperty: any,
-): Omit<Prisma.TaskUncheckedCreateInput, 'creatorId'> {
+): Omit<Prisma.TaskUncheckedCreateInput, 'creator_id'> {
     const { name, description, frequency, difficulty, start, end } = taskProperty
 
     return {
@@ -97,18 +97,18 @@ tasksRouter.post(
                 )
             }
 
-            const updatedTask = await taskModel.create({
+            const createdTask = await taskModel.create({
                 ...taskProperty,
-                creatorId: req.account.id,
+                creator_id: req.account.id,
             })
 
             const taskRequestCreateData = assigners.map((displayAccount) => ({
-                assignerId: displayAccount.id,
-                taskId: updatedTask.id,
+                assigner_id: displayAccount.id,
+                task_id: createdTask.id,
             }))
             await taskRequestModel.createMany(taskRequestCreateData)
 
-            return res.status(201).json(updatedTask)
+            return res.status(201).json(createdTask)
         } catch (err) {
             next(err)
         }
@@ -126,7 +126,7 @@ tasksRouter.put(
 
         try {
             const taskToUpdate = await taskModel.find({ id: taskId })
-            if (taskToUpdate === null || taskToUpdate.creatorId !== req.account.id) {
+            if (taskToUpdate === null || taskToUpdate.creator_id !== req.account.id) {
                 return processClientError(
                     res,
                     403,
@@ -151,7 +151,7 @@ tasksRouter.delete(
 
         try {
             const deletedTask = await taskModel.find({ id: taskId })
-            if (deletedTask === null || deletedTask.creatorId !== req.account.id) {
+            if (deletedTask === null || deletedTask.creator_id !== req.account.id) {
                 return processClientError(
                     res,
                     403,

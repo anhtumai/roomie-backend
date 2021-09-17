@@ -20,9 +20,9 @@ async function create(
 ): Promise<PendingInvitation | null> {
     const newInvitation = await prisma.invitation.create({
         data: {
-            invitorId,
-            inviteeId,
-            apartmentId,
+            invitor_id: invitorId,
+            invitee_id: inviteeId,
+            apartment_id: apartmentId,
         },
         select: {
             id: true,

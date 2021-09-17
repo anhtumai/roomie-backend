@@ -24,9 +24,9 @@ apartmentsRouter.post(
             )
             await accountModel.update(
                 { id: req.account.id },
-                { apartmentId: newApartment.id },
+                { apartment_id: newApartment.id },
             )
-            await invitationModel.deleteMany({ inviteeId: req.account.id })
+            await invitationModel.deleteMany({ invitee_id: req.account.id })
             return res.status(201).json(newApartment)
         } catch (err) {
             if (err instanceof Prisma.PrismaClientKnownRequestError) {
@@ -60,7 +60,7 @@ apartmentsRouter.delete(
                     404,
                     `Apartment with id ${id} does not exist`,
                 )
-            if (toDeleteApartment.adminId !== account.id) {
+            if (toDeleteApartment.admin_id !== account.id) {
                 return processClientError(
                     res,
                     403,
@@ -68,8 +68,8 @@ apartmentsRouter.delete(
                 )
             }
             await accountModel.updateMany(
-                { apartmentId: toDeleteApartment.id },
-                { apartmentId: null },
+                { apartment_id: toDeleteApartment.id },
+                { apartment_id: null },
             )
             await apartmentModel.deleteOne({ id })
             return res.status(204).json()
