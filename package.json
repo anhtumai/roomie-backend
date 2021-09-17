@@ -62,7 +62,7 @@
     "@types/jest": "^26.0.24",
     "@types/jquery": "3.5.5",
     "@types/jsonwebtoken": "^8.5.5",
-    "@types/lodash": "^4.14.170",
+    "@types/lodash": "^4.14.173",
     "@types/lusca": "1.6.2",
     "@types/node": "^14.14.25",
     "@types/nodemailer": "6.4.0",
