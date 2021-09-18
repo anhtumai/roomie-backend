@@ -1,12 +1,12 @@
 import { Prisma } from '@prisma/client'
-import { DisplayAccount } from './account'
+import { JoinApartmentAccount } from './account'
 
 import { prisma } from './client'
 
 export type PendingInvitation = {
     id: number
-    invitor: DisplayAccount
-    invitee: DisplayAccount
+    invitor: JoinApartmentAccount
+    invitee: JoinApartmentAccount
     apartment: {
         id: number
         name: string

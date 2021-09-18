@@ -1,14 +1,11 @@
 import { Router } from 'express'
 
-import accountModel from '../models/account'
 import apartmentModel from '../models/apartment'
 import invitationModel from '../models/invitation'
+import taskRequestModel from '../models/taskRequest'
 
 import middleware from '../util/middleware'
-import processClientError from '../util/error'
-import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
-import taskRequestModel from '../models/taskRequest'
 
 const meRouter = Router()
 
@@ -33,9 +30,10 @@ meRouter.get(
             if (!apartment) return res.status(204).json()
             const apartmentId = apartment.id
 
-            const displayApartment = await apartmentModel.findDisplayApartment({
-                id: apartmentId,
-            })
+            const displayApartment =
+        await apartmentModel.findJoinAdminNMembersApartment({
+            id: apartmentId,
+        })
             const memberIds = displayApartment.members.map((member) => member.id)
             const responseTaskRequests =
         await taskRequestModel.findResponseTaskRequests(memberIds)

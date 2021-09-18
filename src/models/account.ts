@@ -8,16 +8,16 @@ export type Profile = {
     name: string
 }
 
-export type DisplayAccount = Profile & {
+export type JoinApartmentAccount = Profile & {
     apartment?: {
         id: number
         name: string
     }
 }
 
-async function findDisplayAccount(
+async function findJoinApartmentAccount(
     whereParams: Prisma.AccountWhereInput,
-): Promise<DisplayAccount | null> {
+): Promise<JoinApartmentAccount | null> {
     const account = await prisma.account.findFirst({
         where: whereParams,
         select: {
@@ -49,7 +49,7 @@ async function findProfile(
     return account
 }
 
-async function findAccount(
+async function find(
     whereParams: Prisma.AccountWhereInput,
 ): Promise<Account | null> {
     const account = await prisma.account.findFirst({
@@ -119,8 +119,8 @@ async function deleteAll(): Promise<void> {
 }
 
 export default {
-    findAccount,
-    findDisplayAccount,
+    find,
+    findJoinApartmentAccount,
     findProfile,
     create,
     update,

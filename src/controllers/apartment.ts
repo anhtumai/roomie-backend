@@ -3,10 +3,11 @@ import { Prisma } from '@prisma/client'
 
 import apartmentModel from '../models/apartment'
 import accountModel from '../models/account'
+import invitationModel from '../models/invitation'
+
 import middleware from '../util/middleware'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
-import invitationModel from '../models/invitation'
 
 const apartmentsRouter = Router()
 

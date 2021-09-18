@@ -3,29 +3,25 @@ import { Profile } from './account'
 
 import { prisma } from './client'
 
-export type QueryTaskRequest = {
+type JoinAssignerRequest = {
     id: number
     state: RequestType
     assigner: Profile
-    task: Task
 }
-
-type DisplayRequest = {
-    id: number
-    state: RequestType
-    assigner: Profile
+export type JoinTaskNAssignerRequest = JoinAssignerRequest & {
+    task: Task
 }
 
 type ResponseTaskRequest = {
     task: Task
-    requests: DisplayRequest[]
+    requests: JoinAssignerRequest[]
 }
 
 function toResponseTaskRequest(
-    inputs: QueryTaskRequest[],
+    inputs: JoinTaskNAssignerRequest[],
 ): ResponseTaskRequest[] {
     const taskMap: Map<number, Task> = new Map()
-    const requestsMap: Map<number, DisplayRequest[]> = new Map()
+    const requestsMap: Map<number, JoinAssignerRequest[]> = new Map()
 
     for (const queryRequest of inputs) {
         const taskId = queryRequest.task.id
@@ -33,7 +29,7 @@ function toResponseTaskRequest(
             taskMap.set(taskId, queryRequest.task)
             requestsMap.set(taskId, [])
         }
-        const updatedDisplayRequests = [
+        const updatedJoinAssignerRequests = [
             ...requestsMap.get(taskId),
             {
                 id: queryRequest.id,
@@ -41,7 +37,7 @@ function toResponseTaskRequest(
                 assigner: queryRequest.assigner,
             },
         ]
-        requestsMap.set(taskId, updatedDisplayRequests)
+        requestsMap.set(taskId, updatedJoinAssignerRequests)
     }
 
     return Array.from(taskMap.keys()).map((taskId) => ({
@@ -52,7 +48,37 @@ function toResponseTaskRequest(
 
 async function findMany(
     whereParams: Prisma.TaskRequestWhereInput,
-): Promise<QueryTaskRequest[]> {
+): Promise<TaskRequest[]> {
+    const displayRequests = await prisma.taskRequest.findMany({
+        where: whereParams,
+    })
+
+    return displayRequests
+}
+
+async function findJoinAssignerRequest(
+    whereParams: Prisma.TaskRequestWhereUniqueInput,
+): Promise<JoinAssignerRequest | null> {
+    const displayRequest = await prisma.taskRequest.findUnique({
+        where: whereParams,
+        select: {
+            id: true,
+            state: true,
+            assigner: {
+                select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                },
+            },
+        },
+    })
+    return displayRequest
+}
+
+async function findJoinTaskNAssignerRequests(
+    whereParams: Prisma.TaskRequestWhereInput,
+): Promise<JoinTaskNAssignerRequest[]> {
     const taskrequests = await prisma.taskRequest.findMany({
         where: whereParams,
         select: {
@@ -85,33 +111,15 @@ async function findMany(
     return taskrequests
 }
 
-async function findDisplayRequest(
-    whereParams: Prisma.TaskRequestWhereUniqueInput,
-): Promise<DisplayRequest | null> {
-    const displayRequest = await prisma.taskRequest.findUnique({
-        where: whereParams,
-        select: {
-            id: true,
-            state: true,
-            assigner: {
-                select: {
-                    id: true,
-                    name: true,
-                    username: true,
-                },
-            },
-        },
-    })
-    return displayRequest
-}
-
 async function findResponseTaskRequests(
     memberIds: number[],
 ): Promise<ResponseTaskRequest[]> {
     const assignerIdsParams = memberIds.map((id) => ({
         assigner_id: id,
     }))
-    const taskrequests = await findMany({ OR: assignerIdsParams })
+    const taskrequests = await findJoinTaskNAssignerRequests({
+        OR: assignerIdsParams,
+    })
     return toResponseTaskRequest(taskrequests)
 }
 
@@ -148,8 +156,8 @@ async function updateMany(
 }
 
 export default {
-    findDisplayRequest,
     findMany,
+    findJoinAssignerRequest,
     findResponseTaskRequests,
     createMany,
     update,

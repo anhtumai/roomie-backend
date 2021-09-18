@@ -84,7 +84,7 @@ async function accountExtractor(
 
         const accountId = (decodedToken as jwt.JwtPayload).id
 
-        request.account = await accountModel.findDisplayAccount({
+        request.account = await accountModel.findJoinApartmentAccount({
             id: accountId,
         })
     } catch (err) {

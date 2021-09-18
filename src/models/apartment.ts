@@ -3,16 +3,16 @@ import { Profile } from './account'
 
 import { prisma } from './client'
 
-type DisplayApartment = {
+type JoinAdminNMembersApartment = {
     id: number
     name: string
     admin: Profile
     members: Profile[]
 }
 
-async function findDisplayApartment(
+async function findJoinAdminNMembersApartment(
     whereParams: Prisma.ApartmentWhereInput,
-): Promise<DisplayApartment | null> {
+): Promise<JoinAdminNMembersApartment | null> {
     const displayApartment = await prisma.apartment.findFirst({
         where: whereParams,
         select: {
@@ -82,7 +82,7 @@ async function deleteAll(): Promise<void> {
 
 export default {
     find,
-    findDisplayApartment,
+    findJoinAdminNMembersApartment,
     create,
     deleteOne,
     deleteMany,

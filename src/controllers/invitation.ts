@@ -31,7 +31,7 @@ invitationsRouter.post(
             )
         }
         try {
-            const invitee = await accountModel.findDisplayAccount({
+            const invitee = await accountModel.findJoinApartmentAccount({
                 username: inviteeUsername,
             })
             if (invitee === null) {

@@ -16,7 +16,7 @@ loginRouter.post('/', async (req, res, next) => {
     }
 
     try {
-        const account = await accountModel.findAccount({ username: body.username })
+        const account = await accountModel.find({ username: body.username })
         const passwordCorrect =
       account === null
           ? false
