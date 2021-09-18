@@ -18,13 +18,13 @@ model Account {
 	password		String
 
 	apartment		Apartment?			@relation("Member", fields: [apartment_id], references: [id])
-	adminApartment	Apartment?			@relation("Admin")
+	admin_apartment	Apartment?			@relation("Admin")
 	apartment_id		Int?
 	invitors		Invitation[]		@relation("Invitor")
 	invitees		Invitation[]		@relation("Invitee")
 	tasks			Task[]				@relation("Creator")
-	taskRequests	TaskRequest[]		@relation("RequestTo")
-	taskAssignments	TaskAssignment[]	@relation("AssignTo")
+	task_requests	TaskRequest[]		@relation("RequestTo")
+	task_assignments	TaskAssignment[]	@relation("AssignTo")
 }
 
 model Apartment {
@@ -32,7 +32,7 @@ model Apartment {
 	id			Int     @id @default(autoincrement())
 	name		String	@unique @db.VarChar(30)
 	admin		Account @relation("Admin", fields: [admin_id], references: [id])
-	admin_id		Int
+	admin_id	Int
 
 	members		Account[]	@relation("Member")
 	invitations	Invitation[]
@@ -62,8 +62,8 @@ model Task {
 	creator		Account	@relation("Creator", fields: [creator_id], references: [id])
 	creator_id	Int
 
-	taskRequests	TaskRequest[]		@relation("TaskRequest")
-	taskAssignments	TaskAssignment[]	@relation("TaskAssignment")
+	task_requests	TaskRequest[]		@relation("TaskRequest")
+	task_assignments	TaskAssignment[]	@relation("TaskAssignment")
 }
 
 model TaskRequest {
@@ -90,7 +90,7 @@ model TaskAssignment {
 	task			Task	@relation("TaskAssignment", fields: [task_id], references: [id])
 	task_id			Int
 	
-	assign_order	Int
+	order			Int
 	@@unique(fields: [assigner_id, task_id])
 }
 
