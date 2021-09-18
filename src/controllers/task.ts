@@ -8,7 +8,7 @@ import middleware from '../util/middleware'
 import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
-import accountModel, { DisplayAccount } from '../models/account'
+import accountModel, { JoinApartmentAccount } from '../models/account'
 import taskRequestModel from '../models/taskRequest'
 
 import { Prisma } from '@prisma/client'
@@ -60,9 +60,9 @@ tasksRouter.post(
             return processClientError(res, 400, 'List of assigners is invalid')
         }
 
-        const assigners: (DisplayAccount | null)[] = await Promise.all(
+        const assigners: (JoinApartmentAccount | null)[] = await Promise.all(
             assignerUsernames.map(async (username) => {
-                const displayAccount = await accountModel.findDisplayAccount({
+                const displayAccount = await accountModel.find({
                     username,
                 })
                 return displayAccount

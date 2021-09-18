@@ -39,7 +39,7 @@ meRouter.get(
         await taskRequestModel.findResponseTaskRequests(memberIds)
             return res.status(200).json({
                 ...displayApartment,
-                taskRequests: responseTaskRequests,
+                task_requests: responseTaskRequests,
             })
         } catch (err) {
             next(err)

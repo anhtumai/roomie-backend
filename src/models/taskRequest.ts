@@ -29,7 +29,7 @@ function toResponseTaskRequest(
             taskMap.set(taskId, queryRequest.task)
             requestsMap.set(taskId, [])
         }
-        const updatedJoinAssignerRequests = [
+        const updatedRequests = [
             ...requestsMap.get(taskId),
             {
                 id: queryRequest.id,
@@ -37,7 +37,7 @@ function toResponseTaskRequest(
                 assigner: queryRequest.assigner,
             },
         ]
-        requestsMap.set(taskId, updatedJoinAssignerRequests)
+        requestsMap.set(taskId, updatedRequests)
     }
 
     return Array.from(taskMap.keys()).map((taskId) => ({
@@ -79,7 +79,7 @@ async function findJoinAssignerRequest(
 async function findJoinTaskNAssignerRequests(
     whereParams: Prisma.TaskRequestWhereInput,
 ): Promise<JoinTaskNAssignerRequest[]> {
-    const taskrequests = await prisma.taskRequest.findMany({
+    const taskRequests = await prisma.taskRequest.findMany({
         where: whereParams,
         select: {
             id: true,
@@ -108,7 +108,7 @@ async function findJoinTaskNAssignerRequests(
             task_id: 'asc',
         },
     })
-    return taskrequests
+    return taskRequests
 }
 
 async function findResponseTaskRequests(
@@ -155,6 +155,15 @@ async function updateMany(
     return updateUsers.count
 }
 
+async function deleteMany(
+    whereParams: Prisma.TaskRequestWhereInput,
+): Promise<number> {
+    const deleteMany = await prisma.taskRequest.deleteMany({
+        where: whereParams,
+    })
+    return deleteMany.count
+}
+
 export default {
     findMany,
     findJoinAssignerRequest,
@@ -162,4 +171,5 @@ export default {
     createMany,
     update,
     updateMany,
+    deleteMany,
 }
