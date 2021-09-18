@@ -76,7 +76,7 @@ describe('POST /api/apartments', () => {
         const savedApartment = await apartmentModel.find({
             id: response.body.id,
         })
-        const savedAccount = await accountModel.findDisplayAccount({
+        const savedAccount = await accountModel.findJoinApartmentAccount({
             id: savedApartment.admin_id,
         })
 
@@ -211,9 +211,11 @@ describe('POST /api/invitations/:id/accept', () => {
             .expect(200)
 
         const testuser1Id = testuser1Invitation.invitee.id
-        const testuser1DisplayAccount = await accountModel.findDisplayAccount({
-            id: testuser1Id,
-        })
+        const testuser1DisplayAccount = await accountModel.findJoinApartmentAccount(
+            {
+                id: testuser1Id,
+            },
+        )
         expect(testuser1DisplayAccount.apartment.name).toEqual(apartmentName)
 
         const afterAcceptInvitation = await invitationModel.find({

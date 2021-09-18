@@ -30,7 +30,7 @@ describe('POST /api/register', () => {
         expect(createdUser.username).toEqual(user1.username)
         expect(createdUser.password).toBeUndefined()
 
-        const savedUser = await accountModel.findAccount({
+        const savedUser = await accountModel.find({
             username: user1.username,
         })
         expect(savedUser.username).toEqual(user1.username)

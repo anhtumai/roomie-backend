@@ -3,6 +3,8 @@ import supertest, { SuperTest } from 'supertest'
 import accountModel from '../src/models/account'
 import apartmentModel from '../src/models/apartment'
 import invitationModel, { PendingInvitation } from '../src/models/invitation'
+import taskRequestModel from '../src/models/taskRequest'
+import taskModel from '../src/models/task'
 
 async function deleteAll(): Promise<void> {
     await invitationModel.deleteAll()
