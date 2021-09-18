@@ -12,18 +12,19 @@ generator client {
 
 model Account {
 	@@map(name: "account")
-	id				Int				@id @default(autoincrement())
-	username		String			@unique @db.VarChar(30)
-	name			String			@db.VarChar(50)
+	id				Int					@id @default(autoincrement())
+	username		String				@unique @db.VarChar(30)
+	name			String				@db.VarChar(50)
 	password		String
 
-	apartment		Apartment?		@relation("Member", fields: [apartment_id], references: [id])
-	adminApartment	Apartment?		@relation("Admin")
+	apartment		Apartment?			@relation("Member", fields: [apartment_id], references: [id])
+	adminApartment	Apartment?			@relation("Admin")
 	apartment_id		Int?
-	invitors		Invitation[]	@relation("Invitor")
-	invitees		Invitation[]	@relation("Invitee")
-	tasks			Task[]			@relation("Creator")
-	taskrequests	TaskRequest[]	@relation("RequestTo")
+	invitors		Invitation[]		@relation("Invitor")
+	invitees		Invitation[]		@relation("Invitee")
+	tasks			Task[]				@relation("Creator")
+	taskRequests	TaskRequest[]		@relation("RequestTo")
+	taskAssignments	TaskAssignment[]	@relation("AssignTo")
 }
 
 model Apartment {
@@ -61,7 +62,8 @@ model Task {
 	creator		Account	@relation("Creator", fields: [creator_id], references: [id])
 	creator_id	Int
 
-	taskrequest	TaskRequest[]	@relation("TaskRequest")
+	taskRequests	TaskRequest[]		@relation("TaskRequest")
+	taskAssignments	TaskAssignment[]	@relation("TaskAssignment")
 }
 
 model TaskRequest {
@@ -75,6 +77,21 @@ model TaskRequest {
 	task_id		Int
 	
 	state		RequestType	@default(pending)
+	@@unique(fields: [assigner_id, task_id])
+}
+
+model TaskAssignment {
+	@@map(name: "taskassignment")
+	id				Int		@id	@default(autoincrement())
+	
+	assigner		Account	@relation("AssignTo", fields: [assigner_id], references: [id])
+	assigner_id		Int
+
+	task			Task	@relation("TaskAssignment", fields: [task_id], references: [id])
+	task_id			Int
+	
+	assign_order	Int
+	@@unique(fields: [assigner_id, task_id])
 }
 
 enum RequestType {
