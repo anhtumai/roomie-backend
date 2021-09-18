@@ -3,13 +3,14 @@ import { Router } from 'express'
 import _ from 'lodash'
 
 import taskModel from '../models/task'
+import taskRequestModel from '../models/taskRequest'
+import taskAssignmentModel from '../models/taskAssignment'
 
 import middleware from '../util/middleware'
 import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 import accountModel, { JoinApartmentAccount } from '../models/account'
-import taskRequestModel from '../models/taskRequest'
 
 import { Prisma } from '@prisma/client'
 
@@ -62,22 +63,22 @@ tasksRouter.post(
 
         const assigners: (JoinApartmentAccount | null)[] = await Promise.all(
             assignerUsernames.map(async (username) => {
-                const displayAccount = await accountModel.find({
+                const account = await accountModel.findJoinApartmentAccount({
                     username,
                 })
-                return displayAccount
+                return account
             }),
         )
         const incompliantUsernames = _.zip(assignerUsernames, assigners)
             .filter((params) => {
-                const displayAccount = params[1]
-                if (!displayAccount) return true
-                if (!displayAccount.apartment) return true
-                if (displayAccount.apartment.id !== req.account.apartment.id)
-                    return true
+                const account = params[1]
+                if (!account) return true
+                if (!account.apartment) return true
+                if (account.apartment.id !== req.account.apartment.id) return true
                 return false
             })
             .map((params) => params[0])
+        console.log(incompliantUsernames)
 
         if (incompliantUsernames.length > 0) {
             return processClientError(
@@ -121,7 +122,10 @@ tasksRouter.put(
     async (req: RequestAfterExtractor, res, next) => {
         const taskId = Number(req.params.id)
 
-        const updateParams = req.body
+        if (!validateTaskProperty(req.body)) {
+            return processClientError(res, 400, 'Task property is invalid')
+        }
+        const newTaskProperty = parseTaskProperty(req.body)
 
         try {
             const taskToUpdate = await taskModel.find({ id: taskId })
@@ -132,8 +136,11 @@ tasksRouter.put(
                     'This task does not exist or user is forbidden to edit this task',
                 )
             }
-            const updatedTask = await taskModel.update({ id: taskId }, updateParams)
-            return res.json(200).json(updatedTask)
+            const updatedTask = await taskModel.update(
+                { id: taskId },
+                newTaskProperty,
+            )
+            return res.status(200).json(updatedTask)
         } catch (err) {
             logger.error(err)
             next(err)
@@ -157,7 +164,11 @@ tasksRouter.delete(
                     'This task does not exist or user is forbidden to delete this task',
                 )
             }
+            await taskRequestModel.deleteMany({ task_id: taskId })
+            await taskAssignmentModel.deleteMany({ task_id: taskId })
             await taskModel.deleteOne({ id: taskId })
+
+            return res.status(204).json()
         } catch (err) {
             logger.error(err)
             next(err)
