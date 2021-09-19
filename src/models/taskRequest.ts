@@ -17,7 +17,7 @@ type ResponseTaskRequest = {
     requests: JoinAssignerRequest[]
 }
 
-function toResponseTaskRequest(
+function toResponseTaskRequests(
     inputs: JoinTaskNAssignerRequest[],
 ): ResponseTaskRequest[] {
     const taskMap: Map<number, Task> = new Map()
@@ -120,7 +120,15 @@ async function findResponseTaskRequests(
     const taskRequests = await findJoinTaskNAssignerRequests({
         OR: assignerIdsParams,
     })
-    return toResponseTaskRequest(taskRequests)
+    return toResponseTaskRequests(taskRequests)
+}
+
+async function findResponseTaskRequest(
+    whereParams: Prisma.TaskRequestWhereInput,
+): Promise<ResponseTaskRequest | null> {
+    const taskRequests = await findJoinTaskNAssignerRequests(whereParams)
+    if (taskRequests.length === 0) return null
+    return toResponseTaskRequests(taskRequests)[0]
 }
 
 async function createMany(
@@ -167,6 +175,7 @@ async function deleteMany(
 export default {
     findMany,
     findJoinAssignerRequest,
+    findResponseTaskRequest,
     findResponseTaskRequests,
     createMany,
     update,

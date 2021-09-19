@@ -1,4 +1,4 @@
-import { Prisma, Task } from '@prisma/client'
+import { Prisma, Task, TaskAssignment } from '@prisma/client'
 import { Profile } from './account'
 
 import { prisma } from './client'
@@ -18,7 +18,7 @@ type ResponseTaskAssignment = {
     assignments: JoinAssignerAssignment[]
 }
 
-function toResponseTaskAssignment(
+function toResponseTaskAssignments(
     inputs: JoinTaskNAssignerAssignment[],
 ): ResponseTaskAssignment[] {
     const taskMap: Map<number, Task> = new Map()
@@ -88,7 +88,15 @@ async function findResponseTaskAssignments(
     const taskAssignments = await findJoinTaskNAssignerAssignments({
         OR: assignerIdsParams,
     })
-    return toResponseTaskAssignment(taskAssignments)
+    return toResponseTaskAssignments(taskAssignments)
+}
+
+async function findResponseTaskAssignment(
+    whereParams: Prisma.TaskAssignmentWhereInput,
+): Promise<ResponseTaskAssignment | null> {
+    const taskAssignments = await findJoinTaskNAssignerAssignments(whereParams)
+    if (taskAssignments.length === 0) return null
+    return toResponseTaskAssignments(taskAssignments)[0]
 }
 
 async function createMany(
@@ -101,7 +109,7 @@ async function createMany(
 }
 
 async function deleteMany(
-    whereParams: Prisma.TaskRequestWhereInput,
+    whereParams: Prisma.TaskAssignmentWhereInput,
 ): Promise<number> {
     const deleteMany = await prisma.taskAssignment.deleteMany({
         where: whereParams,
@@ -109,8 +117,21 @@ async function deleteMany(
     return deleteMany.count
 }
 
+async function update(
+    whereParams: Prisma.TaskAssignmentWhereUniqueInput,
+    dataParams: Prisma.TaskAssignmentUpdateInput,
+): Promise<TaskAssignment | null> {
+    const updatedTask = await prisma.taskAssignment.update({
+        where: whereParams,
+        data: dataParams,
+    })
+    return updatedTask
+}
+
 export default {
+    findResponseTaskAssignment,
     findResponseTaskAssignments,
     createMany,
     deleteMany,
+    update,
 }

@@ -8,7 +8,6 @@ import taskAssignmentModel from '../models/taskAssignment'
 import apartmentModel from '../models/apartment'
 
 import middleware from '../util/middleware'
-import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 import accountModel, { JoinApartmentAccount } from '../models/account'
@@ -36,6 +35,36 @@ function taskPropertyValidator(
     if (!validateTaskProperty(request.body)) {
         return processClientError(response, 400, 'Task property is invalid')
     }
+    next()
+}
+
+function validateStringArray(arr: any): boolean {
+    if (!Array.isArray(arr) || arr.length == 0) return false
+    if (!arr.every((i) => typeof i === 'string')) return false
+    return true
+}
+
+function assignersValidator(
+    request: RequestAfterExtractor,
+    response: Response,
+    next: NextFunction,
+): Response | null {
+    const errMessage = 'Assigners should contain list of assigners usernames'
+
+    if (!validateStringArray(request.body.assigners))
+        return processClientError(response, 400, errMessage)
+    next()
+}
+
+function ordersValidator(
+    request: RequestAfterExtractor,
+    response: Response,
+    next: NextFunction,
+): Response | null {
+    const errMessage = 'Orders should contain list of assigners usernames'
+
+    if (!validateStringArray(request.body.orders))
+        return processClientError(response, 400, errMessage)
     next()
 }
 
@@ -110,19 +139,12 @@ async function viewPermissionValidator(
 tasksRouter.post(
     '/',
     taskPropertyValidator,
+    assignersValidator,
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
         const taskProperty = parseTaskProperty(req.body)
 
         const assignerUsernames: string[] = req.body.assigners
-
-        if (!Array.isArray(assignerUsernames) || assignerUsernames.length == 0) {
-            return processClientError(res, 400, 'List of assigners is missing')
-        }
-
-        if (!assignerUsernames.every((i) => typeof i === 'string')) {
-            return processClientError(res, 400, 'List of assigners is invalid')
-        }
 
         const assigners: (JoinApartmentAccount | null)[] = await Promise.all(
             assignerUsernames.map(async (username) => {
@@ -250,14 +272,45 @@ tasksRouter.get(
 
 tasksRouter.put(
     '/:id/orders',
+    ordersValidator,
     middleware.accountExtractor,
     middleware.paramsIdValidator,
-    viewPermissionValidator,
+    updateDeletePermissionValidator,
     async (req: RequestAfterExtractor, res, next) => {
         const taskId = Number(req.params.id)
+        const usernames: string[] = req.body.orders
         try {
-            const responseTaskRequests =
-        await taskRequestModel.findResponseTaskRequests({ task_id: taskId })
+            const responseTaskAssignment =
+        await taskAssignmentModel.findResponseTaskAssignment({
+            task_id: taskId,
+        })
+            if (!responseTaskAssignment)
+                return processClientError(
+                    res,
+                    400,
+                    'Task hasn\'t been assigned to anyones',
+                )
+            const assignerUsernames = responseTaskAssignment.assignments.map(
+                (assignment) => assignment.assigner.username,
+            )
+            if (!_.isEqual(usernames.sort(), assignerUsernames.sort()))
+                return processClientError(
+                    res,
+                    400,
+                    'Orders must contain all member usernames',
+                )
+            for (const [i, username] of usernames.entries()) {
+                const assignmentId = responseTaskAssignment.assignments.find(
+                    (assignment) => assignment.assigner.username === username,
+                ).id
+                await taskAssignmentModel.update(
+                    { id: assignmentId },
+                    {
+                        order: i,
+                    },
+                )
+            }
+            return res.status(204).json()
         } catch (err) {
             next(err)
         }

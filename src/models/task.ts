@@ -1,6 +1,12 @@
 import { Task, Prisma } from '@prisma/client'
 import { prisma } from './client'
 
+type JoinCreatorTask = {
+    creator: {
+        apartment_id: number
+    }
+}
+
 async function create(
     dataParams: Prisma.TaskUncheckedCreateInput,
 ): Promise<Task> {
@@ -15,6 +21,22 @@ async function find(
 ): Promise<Task | null> {
     const task = await prisma.task.findFirst({
         where: whereParams,
+    })
+    return task
+}
+
+async function findJoinCreatorApartment(
+    whereParams: Prisma.TaskWhereUniqueInput,
+): Promise<JoinCreatorTask | null> {
+    const task = await prisma.task.findUnique({
+        where: whereParams,
+        select: {
+            creator: {
+                select: {
+                    apartment_id: true,
+                },
+            },
+        },
     })
     return task
 }
@@ -50,6 +72,7 @@ async function deleteOne(
 export default {
     create,
     find,
+    findJoinCreatorApartment,
     findMany,
     update,
     deleteOne,
