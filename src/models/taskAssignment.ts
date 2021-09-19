@@ -1,4 +1,4 @@
-import { Prisma, Task, TaskAssignment } from '@prisma/client'
+import { Prisma, Task } from '@prisma/client'
 import { Profile } from './account'
 
 import { prisma } from './client'
@@ -11,6 +11,40 @@ type JoinAssignerAssignment = {
 
 type JoinTaskNAssignerAssignment = JoinAssignerAssignment & {
     task: Task
+}
+
+type ResponseTaskAssignment = {
+    task: Task
+    assignments: JoinAssignerAssignment[]
+}
+
+function toResponseTaskAssignment(
+    inputs: JoinTaskNAssignerAssignment[],
+): ResponseTaskAssignment[] {
+    const taskMap: Map<number, Task> = new Map()
+    const assignmentsMap: Map<number, JoinAssignerAssignment[]> = new Map()
+
+    for (const queryAssignment of inputs) {
+        const taskId = queryAssignment.task.id
+        if (!taskMap.has(taskId)) {
+            taskMap.set(taskId, queryAssignment.task)
+            assignmentsMap.set(taskId, [])
+        }
+        const updatedAssignments = [
+            ...assignmentsMap.get(taskId),
+            {
+                id: queryAssignment.id,
+                order: queryAssignment.order,
+                assigner: queryAssignment.assigner,
+            },
+        ]
+        assignmentsMap.set(taskId, updatedAssignments)
+    }
+
+    return Array.from(taskMap.keys()).map((taskId) => ({
+        task: taskMap.get(taskId),
+        assignments: assignmentsMap.get(taskId),
+    }))
 }
 
 async function findJoinTaskNAssignerAssignments(
@@ -45,6 +79,18 @@ async function findJoinTaskNAssignerAssignments(
     return taskAssignments
 }
 
+async function findResponseTaskAssignments(
+    memberIds: number[],
+): Promise<ResponseTaskAssignment[]> {
+    const assignerIdsParams = memberIds.map((id) => ({
+        assigner_id: id,
+    }))
+    const taskAssignments = await findJoinTaskNAssignerAssignments({
+        OR: assignerIdsParams,
+    })
+    return toResponseTaskAssignment(taskAssignments)
+}
+
 async function createMany(
     inputs: Prisma.TaskAssignmentUncheckedCreateInput[],
 ): Promise<number> {
@@ -54,6 +100,17 @@ async function createMany(
     return createMany.count
 }
 
+async function deleteMany(
+    whereParams: Prisma.TaskRequestWhereInput,
+): Promise<number> {
+    const deleteMany = await prisma.taskAssignment.deleteMany({
+        where: whereParams,
+    })
+    return deleteMany.count
+}
+
 export default {
+    findResponseTaskAssignments,
     createMany,
+    deleteMany,
 }

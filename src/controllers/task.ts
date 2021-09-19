@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Request, Response, NextFunction, Router } from 'express'
 
 import _ from 'lodash'
 
@@ -39,6 +39,27 @@ function parseTaskProperty(
         difficulty,
         start: new Date(start),
         end: new Date(end),
+    }
+}
+
+async function permissionValidator(
+    request: RequestAfterExtractor,
+    response: Response,
+    next: NextFunction,
+): Promise<Response | void> {
+    try {
+        const taskId = Number(request.params.id)
+        const task = await taskModel.find({ id: taskId })
+        if (task === null || task.creator_id !== request.account.id) {
+            return processClientError(
+                response,
+                403,
+                'Task doesn\'t exist or user is forbidden to edit/delete/view this task',
+            )
+        }
+        next()
+    } catch (err) {
+        next(err)
     }
 }
 
@@ -119,6 +140,7 @@ tasksRouter.put(
     '/:id',
     middleware.accountExtractor,
     middleware.paramsIdValidator,
+    permissionValidator,
     async (req: RequestAfterExtractor, res, next) => {
         const taskId = Number(req.params.id)
 
@@ -128,14 +150,6 @@ tasksRouter.put(
         const newTaskProperty = parseTaskProperty(req.body)
 
         try {
-            const taskToUpdate = await taskModel.find({ id: taskId })
-            if (taskToUpdate === null || taskToUpdate.creator_id !== req.account.id) {
-                return processClientError(
-                    res,
-                    403,
-                    'This task does not exist or user is forbidden to edit this task',
-                )
-            }
             const updatedTask = await taskModel.update(
                 { id: taskId },
                 newTaskProperty,
@@ -156,23 +170,34 @@ tasksRouter.delete(
         const taskId = Number(req.params.id)
 
         try {
-            const deletedTask = await taskModel.find({ id: taskId })
-            if (deletedTask === null || deletedTask.creator_id !== req.account.id) {
-                return processClientError(
-                    res,
-                    403,
-                    'This task does not exist or user is forbidden to delete this task',
-                )
-            }
             await taskRequestModel.deleteMany({ task_id: taskId })
             await taskAssignmentModel.deleteMany({ task_id: taskId })
             await taskModel.deleteOne({ id: taskId })
 
             return res.status(204).json()
         } catch (err) {
-            logger.error(err)
             next(err)
         }
+    },
+)
+
+tasksRouter.get(
+    '/:id/orders',
+    middleware.accountExtractor,
+    middleware.paramsIdValidator,
+    permissionValidator,
+    async (req: RequestAfterExtractor, res, next) => {
+        const taskId = Number(req.params.id)
+    },
+)
+
+tasksRouter.put(
+    '/:id/orders',
+    middleware.accountExtractor,
+    middleware.paramsIdValidator,
+    permissionValidator,
+    async (req: RequestAfterExtractor, res, next) => {
+        const taskId = Number(req.params.id)
     },
 )
 

@@ -117,10 +117,10 @@ async function findResponseTaskRequests(
     const assignerIdsParams = memberIds.map((id) => ({
         assigner_id: id,
     }))
-    const taskrequests = await findJoinTaskNAssignerRequests({
+    const taskRequests = await findJoinTaskNAssignerRequests({
         OR: assignerIdsParams,
     })
-    return toResponseTaskRequest(taskrequests)
+    return toResponseTaskRequest(taskRequests)
 }
 
 async function createMany(

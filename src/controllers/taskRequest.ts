@@ -4,10 +4,10 @@ import _ from 'lodash'
 
 import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
-import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 import logger from '../util/logger'
 import middleware from '../util/middleware'
+import { RequestAfterExtractor } from '../types/express-middleware'
 
 const taskRequestsRouter = Router()
 
@@ -16,14 +16,13 @@ async function createTaskAssignment(taskId: number): Promise<void> {
         const taskRequests = await taskRequestModel.findMany({ task_id: taskId })
         const requestStates = taskRequests.map((taskRequest) => taskRequest.state)
 
-        console.log(taskRequests)
         if (!requestStates.every((state) => state === 'accepted')) {
             return
         }
 
         // Need to notify to the client side
         //
-        console.log(taskRequests)
+        console.log('Notify: All requests for task: taskId has been accepted')
 
         const taskAssignmentCreateData = _.sortBy(taskRequests, [
             'assigner_id',
@@ -35,6 +34,8 @@ async function createTaskAssignment(taskId: number): Promise<void> {
 
         await taskAssignmentModel.createMany(taskAssignmentCreateData)
         await taskRequestModel.deleteMany({ task_id: taskId })
+
+        console.log('Notify: Task Assignment is created')
     } catch (err) {
         logger.error(err)
     }
@@ -62,7 +63,7 @@ taskRequestsRouter.patch(
                 return processClientError(
                     res,
                     403,
-                    'You dont have permission to patch this task request',
+                    'You dont have permission to patch or this task request no longer exists',
                 )
             }
             const updatedTaskRequest = await taskRequestModel.update(
