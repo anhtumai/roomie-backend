@@ -232,7 +232,16 @@ tasksRouter.get(
     async (req: RequestAfterExtractor, res, next) => {
         const taskId = Number(req.params.id)
         try {
-            const task = await task
+            const responseTaskRequest =
+        await taskRequestModel.findResponseTaskRequest({
+            task_id: taskId,
+        })
+            if (responseTaskRequest) return res.status(200).json(responseTaskRequest)
+            const responseTaskAssignment =
+        await taskAssignmentModel.findResponseTaskAssignment({
+            task_id: taskId,
+        })
+            return res.status(200).json(responseTaskAssignment)
         } catch (err) {
             next(err)
         }
