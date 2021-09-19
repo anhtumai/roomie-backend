@@ -87,6 +87,11 @@ async function accountExtractor(
         request.account = await accountModel.findJoinApartmentAccount({
             id: accountId,
         })
+
+        if (!request.account) {
+            processClientError(response, 403, 'Account doesn\'t exist')
+            return
+        }
     } catch (err) {
         next(err)
     }

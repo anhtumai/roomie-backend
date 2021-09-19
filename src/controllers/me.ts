@@ -3,6 +3,7 @@ import { Router } from 'express'
 import apartmentModel from '../models/apartment'
 import invitationModel from '../models/invitation'
 import taskRequestModel from '../models/taskRequest'
+import taskAssignmentModel from '../models/taskAssignment'
 
 import middleware from '../util/middleware'
 import { RequestAfterExtractor } from '../types/express-middleware'
@@ -26,7 +27,7 @@ meRouter.get(
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
         try {
-            const { apartment } = req.account
+            const apartment = req.account.apartment
             if (!apartment) return res.status(204).json()
             const apartmentId = apartment.id
 
@@ -37,9 +38,14 @@ meRouter.get(
             const memberIds = displayApartment.members.map((member) => member.id)
             const responseTaskRequests =
         await taskRequestModel.findResponseTaskRequests(memberIds)
+
+            const responseTaskAssignments =
+        await taskAssignmentModel.findResponseTaskAssignments(memberIds)
+
             return res.status(200).json({
                 ...displayApartment,
                 task_requests: responseTaskRequests,
+                task_assignments: responseTaskAssignments,
             })
         } catch (err) {
             next(err)
