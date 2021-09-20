@@ -172,6 +172,10 @@ async function deleteMany(
     return deleteMany.count
 }
 
+async function deleteAll(): Promise<number> {
+    const count = await deleteMany({})
+    return count
+}
 export default {
     findMany,
     findJoinAssignerRequest,
@@ -181,4 +185,5 @@ export default {
     update,
     updateMany,
     deleteMany,
+    deleteAll,
 }

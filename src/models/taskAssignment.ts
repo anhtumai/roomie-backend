@@ -128,10 +128,16 @@ async function update(
     return updatedTask
 }
 
+async function deleteAll(): Promise<number> {
+    const count = await deleteMany({})
+    return count
+}
+
 export default {
     findResponseTaskAssignment,
     findResponseTaskAssignments,
     createMany,
-    deleteMany,
     update,
+    deleteMany,
+    deleteAll,
 }

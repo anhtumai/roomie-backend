@@ -69,6 +69,18 @@ async function deleteOne(
     return deletedTask
 }
 
+async function deleteMany(whereParams: Prisma.TaskWhereInput): Promise<number> {
+    const deleteMany = await prisma.task.deleteMany({
+        where: whereParams,
+    })
+    return deleteMany.count
+}
+
+async function deleteAll(): Promise<number> {
+    const count = await deleteMany({})
+    return count
+}
+
 export default {
     create,
     find,
@@ -76,4 +88,5 @@ export default {
     findMany,
     update,
     deleteOne,
+    deleteAll,
 }
