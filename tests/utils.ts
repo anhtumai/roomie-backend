@@ -97,6 +97,23 @@ async function acceptInvitation(
         .expect(200)
 }
 
+async function handleTaskRequest(
+    api: SuperTest<supertest.Test>,
+    token: string,
+    requestId: number,
+    state: 'pending' | 'accepted' | 'rejected',
+): Promise<void> {
+    await api
+        .patch(`/api/taskrequests/${requestId}`)
+        .set('Authorization', 'Bearer ' + token)
+        .send({ state })
+        .expect(200)
+}
+
+function sleep(milliseconds: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
 export default {
     deleteAll,
     registerUser,
@@ -106,4 +123,6 @@ export default {
     sendInvitation,
     sendInvitations,
     acceptInvitation,
+    handleTaskRequest,
+    sleep,
 }
