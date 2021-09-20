@@ -4,5 +4,4 @@
 
 ## Documentation
 
-[ERD](https://drive.google.com/file/d/13wO82H7EFu7UNHLWs4OFDugKqwMUVbo1/view?usp=sharing)
-[API Documentation]()
+ERD digram: [ERD](https://drive.google.com/file/d/13wO82H7EFu7UNHLWs4OFDugKqwMUVbo1/view?usp=sharing)
