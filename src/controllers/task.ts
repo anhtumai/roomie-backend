@@ -146,32 +146,6 @@ tasksRouter.post(
 
         const assignerUsernames: string[] = req.body.assigners
 
-        const assigners: (JoinApartmentAccount | null)[] = await Promise.all(
-            assignerUsernames.map(async (username) => {
-                const account = await accountModel.findJoinApartmentAccount({
-                    username,
-                })
-                return account
-            }),
-        )
-        const incompliantUsernames = _.zip(assignerUsernames, assigners)
-            .filter((params) => {
-                const account = params[1]
-                if (!account) return true
-                if (!account.apartment) return true
-                if (account.apartment.id !== req.account.apartment.id) return true
-                return false
-            })
-            .map((params) => params[0])
-        console.log(incompliantUsernames)
-
-        if (incompliantUsernames.length > 0) {
-            return processClientError(
-                res,
-                400,
-                `These usernames: ${incompliantUsernames.join()} do not exist or are not member of this apartment`,
-            )
-        }
         if (!req.account.apartment) {
             return processClientError(
                 res,
@@ -180,6 +154,31 @@ tasksRouter.post(
             )
         }
         try {
+            const assigners: (JoinApartmentAccount | null)[] = await Promise.all(
+                assignerUsernames.map(async (username) => {
+                    const account = await accountModel.findJoinApartmentAccount({
+                        username,
+                    })
+                    return account
+                }),
+            )
+            const incompliantUsernames = _.zip(assignerUsernames, assigners)
+                .filter((params) => {
+                    const account = params[1]
+                    if (!account) return true
+                    if (!account.apartment) return true
+                    if (account.apartment.id !== req.account.apartment.id) return true
+                    return false
+                })
+                .map((params) => params[0])
+
+            if (incompliantUsernames.length > 0) {
+                return processClientError(
+                    res,
+                    400,
+                    `These usernames: ${incompliantUsernames.join()} do not exist or are not member of this apartment`,
+                )
+            }
             const createdTask = await taskModel.create({
                 ...taskProperty,
                 creator_id: req.account.id,
@@ -301,12 +300,7 @@ tasksRouter.put(
                 const assignmentId = responseTaskAssignment.assignments.find(
                     (assignment) => assignment.assigner.username === username,
                 ).id
-                await taskAssignmentModel.update(
-                    { id: assignmentId },
-                    {
-                        order: i,
-                    },
-                )
+                await taskAssignmentModel.update({ id: assignmentId }, { order: i })
             }
             return res.status(204).json()
         } catch (err) {
