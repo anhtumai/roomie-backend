@@ -6,11 +6,11 @@ import taskModel from '../models/task'
 import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import apartmentModel from '../models/apartment'
+import accountModel, { JoinApartmentAccount } from '../models/account'
 
 import middleware from '../util/middleware'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
-import accountModel, { JoinApartmentAccount } from '../models/account'
 
 import { Prisma } from '@prisma/client'
 
@@ -172,16 +172,14 @@ tasksRouter.post(
                 `These usernames: ${incompliantUsernames.join()} do not exist or are not member of this apartment`,
             )
         }
-
+        if (!req.account.apartment) {
+            return processClientError(
+                res,
+                400,
+                'You can only create task if you are member of an apartment',
+            )
+        }
         try {
-            if (!req.account.apartment) {
-                return processClientError(
-                    res,
-                    400,
-                    'You can only create task if you are member of an apartment',
-                )
-            }
-
             const createdTask = await taskModel.create({
                 ...taskProperty,
                 creator_id: req.account.id,

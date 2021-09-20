@@ -12,6 +12,12 @@ export type JoinTaskNAssignerRequest = JoinAssignerRequest & {
     task: Task
 }
 
+export type JoinTaskRequest = {
+    id: number
+    state: RequestType
+    task: Task
+}
+
 type ResponseTaskRequest = {
     task: Task
     requests: JoinAssignerRequest[]
@@ -69,6 +75,31 @@ async function findJoinAssignerRequest(
                     id: true,
                     name: true,
                     username: true,
+                },
+            },
+        },
+    })
+    return displayRequest
+}
+
+async function findJoinTaskRequests(
+    whereParams: Prisma.TaskRequestWhereInput,
+): Promise<JoinTaskRequest[]> {
+    const displayRequest = await prisma.taskRequest.findMany({
+        where: whereParams,
+        select: {
+            id: true,
+            state: true,
+            task: {
+                select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    frequency: true,
+                    difficulty: true,
+                    start: true,
+                    end: true,
+                    creator_id: true,
                 },
             },
         },
@@ -178,6 +209,7 @@ async function deleteAll(): Promise<number> {
 }
 export default {
     findMany,
+    findJoinTaskRequests,
     findJoinAssignerRequest,
     findResponseTaskRequest,
     findResponseTaskRequests,

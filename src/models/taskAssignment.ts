@@ -3,6 +3,12 @@ import { Profile } from './account'
 
 import { prisma } from './client'
 
+type JoinTaksAssignment = {
+    id: number
+    order: number
+    task: Task
+}
+
 type JoinAssignerAssignment = {
     id: number
     order: number
@@ -45,6 +51,31 @@ function toResponseTaskAssignments(
         task: taskMap.get(taskId),
         assignments: assignmentsMap.get(taskId),
     }))
+}
+
+async function findJoinTaskAssignments(
+    whereParams: Prisma.TaskAssignmentWhereInput,
+): Promise<JoinTaksAssignment[]> {
+    const displayAssignments = await prisma.taskAssignment.findMany({
+        where: whereParams,
+        select: {
+            id: true,
+            order: true,
+            task: {
+                select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    frequency: true,
+                    difficulty: true,
+                    start: true,
+                    end: true,
+                    creator_id: true,
+                },
+            },
+        },
+    })
+    return displayAssignments
 }
 
 async function findJoinTaskNAssignerAssignments(
@@ -134,6 +165,7 @@ async function deleteAll(): Promise<number> {
 }
 
 export default {
+    findJoinTaskAssignments,
     findResponseTaskAssignment,
     findResponseTaskAssignments,
     createMany,
