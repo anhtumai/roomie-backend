@@ -11,6 +11,7 @@
   },
   "plugins": ["@typescript-eslint"],
   "rules": {
+    "max-len": [2, { "code": 100, "tabWidth": 4, "ignoreUrls": true }],
     "indent": "off",
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "single"],
