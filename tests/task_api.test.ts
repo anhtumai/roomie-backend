@@ -3,13 +3,12 @@ import supertest from 'supertest'
 import app from '../src/app'
 import { prisma } from '../src/models/client'
 
-import accountModel from '../src/models/account'
 import taskRequestModel from '../src/models/taskRequest'
 import taskAssignmentModel from '../src/models/taskAssignment'
+import taskModel from '../src/models/task'
 
 import utils from './utils'
 import users from './users'
-import { response } from 'express'
 
 const api = supertest(app)
 
@@ -24,6 +23,16 @@ let user1Token = ''
 let testuser1Token = ''
 let testuser2Token = ''
 let testuser3Token = ''
+
+const taskRequest1 = {
+    name: 'Clean the bathroom',
+    description: 'clean the toilet, ...',
+    frequency: 1,
+    difficulty: 6,
+    start: '01 Sep 2021',
+    end: '01 Sep 2022',
+    assigners: ['anhtumai', 'firsttestuser', 'secondtestuser'],
+}
 
 beforeAll(async () => {
     await utils.deleteAll()
@@ -47,25 +56,6 @@ beforeAll(async () => {
 })
 
 describe('POST /api/tasks', () => {
-    const taskRequest1 = {
-        name: 'Clean the bathroom',
-        description: 'clean the toilet, ...',
-        frequency: 1,
-        difficulty: 6,
-        start: '01 Sep 2021',
-        end: '01 Sep 2022',
-        assigners: ['anhtumai', 'firsttestuser', 'secondtestuser'],
-    }
-    const taskRequest2 = {
-        name: 'Clean the kitchen',
-        description: 'clean the sink, ...',
-        frequency: 1,
-        difficulty: 6,
-        start: '01 Sep 2021',
-        end: '01 Sep 2022',
-        assigners: ['anhtumai', 'firsttestuser'],
-    }
-
     test('create task should return 400 if you are not member of apartment', async () => {
         await api
             .post('/api/tasks')
@@ -90,6 +80,42 @@ describe('POST /api/tasks', () => {
         expect(
             allRequests.every((request) => request.state === 'pending'),
         ).toBeTruthy()
+    })
+})
+
+describe('PUT /api/tasks/:id', () => {
+    let taskId = 0
+    test('get task ID', async () => {
+        const response = await api
+            .get('/api/me/tasks')
+            .set('Authorization', 'Bearer ' + user1Token)
+
+        taskId = Number(response.body.requests[0].task.id)
+    })
+    test('change task property should return 200', async () => {
+        const updatedTaskRequest1 = {
+            ...taskRequest1,
+            frequency: 2,
+        }
+        await api
+            .put(`/api/tasks/${taskId}`)
+            .set('Authorization', 'Bearer ' + user1Token)
+            .send(updatedTaskRequest1)
+            .expect(200)
+
+        const task = await taskModel.find({ id: taskId })
+        expect(task.frequency).toEqual(2)
+    })
+    test('change task property with invalid value should return 400', async () => {
+        const updatedTaskRequest1 = {
+            ...taskRequest1,
+            frequency: 'invalid',
+        }
+        await api
+            .put(`/api/tasks/${taskId}`)
+            .set('Authorization', 'Bearer ' + user1Token)
+            .send(updatedTaskRequest1)
+            .expect(400)
     })
 })
 
@@ -186,6 +212,16 @@ describe('PUT /api/tasks/:id/order', () => {
             .set('Authorization', 'Bearer ' + testuser1Token)
             .send({ order: newOrder })
             .expect(200)
+
+        const responseTaskAssignment =
+      await taskAssignmentModel.findResponseTaskAssignment({ task_id: taskId })
+
+        const joinTaskAssignments = responseTaskAssignment.assignments
+        joinTaskAssignments.sort((asn1, asn2) => asn1.order - asn2.order)
+        const selectedOrder = joinTaskAssignments.map(
+            (assignment) => assignment.assigner.username,
+        )
+        expect(selectedOrder).toEqual(newOrder)
     })
     test('change order without all assigners usernames will return 400', async () => {
         await api
