@@ -28,7 +28,7 @@ function errorHandler(
     request: Request,
     response: Response,
     next: NextFunction,
-): Response {
+): void {
     logger.error(error.message)
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

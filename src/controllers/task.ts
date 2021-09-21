@@ -31,7 +31,7 @@ function taskPropertyValidator(
     request: Request,
     response: Response,
     next: NextFunction,
-): Response | void {
+): void {
     if (!validateTaskProperty(request.body)) {
         return processClientError(response, 400, 'Task property is invalid')
     }
@@ -48,7 +48,7 @@ function assignersValidator(
     request: RequestAfterExtractor,
     response: Response,
     next: NextFunction,
-): Response | null {
+): void {
     const errMessage = 'Assigners should contain list of assigners usernames'
 
     if (!validateStringArray(request.body.assigners))
@@ -60,7 +60,7 @@ function orderValidator(
     request: RequestAfterExtractor,
     response: Response,
     next: NextFunction,
-): Response | null {
+): void {
     const errMessage = 'Orders should contain list of assigners usernames'
 
     if (!validateStringArray(request.body.order))
@@ -87,7 +87,7 @@ async function updateDeletePermissionValidator(
     request: RequestAfterExtractor,
     response: Response,
     next: NextFunction,
-): Promise<Response | void> {
+): Promise<void> {
     try {
         const taskId = Number(request.params.id)
         const errorMessage =
@@ -115,7 +115,7 @@ async function viewPermissionValidator(
     request: RequestAfterExtractor,
     response: Response,
     next: NextFunction,
-): Promise<Response | void> {
+): Promise<void> {
     try {
         const taskId = Number(request.params.id)
         const errorMessage =
