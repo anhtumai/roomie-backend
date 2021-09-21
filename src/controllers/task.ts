@@ -56,14 +56,14 @@ function assignersValidator(
     next()
 }
 
-function ordersValidator(
+function orderValidator(
     request: RequestAfterExtractor,
     response: Response,
     next: NextFunction,
 ): Response | null {
     const errMessage = 'Orders should contain list of assigners usernames'
 
-    if (!validateStringArray(request.body.orders))
+    if (!validateStringArray(request.body.order))
         return processClientError(response, 400, errMessage)
     next()
 }
@@ -268,14 +268,14 @@ tasksRouter.get(
 )
 
 tasksRouter.put(
-    '/:id/orders',
-    ordersValidator,
+    '/:id/order',
+    orderValidator,
     middleware.accountExtractor,
     middleware.paramsIdValidator,
     updateDeletePermissionValidator,
     async (req: RequestAfterExtractor, res, next) => {
         const taskId = Number(req.params.id)
-        const usernames: string[] = req.body.orders
+        const usernames: string[] = req.body.order
         try {
             const responseTaskAssignment =
         await taskAssignmentModel.findResponseTaskAssignment({
@@ -290,7 +290,7 @@ tasksRouter.put(
             const assignerUsernames = responseTaskAssignment.assignments.map(
                 (assignment) => assignment.assigner.username,
             )
-            if (!_.isEqual(usernames.sort(), assignerUsernames.sort()))
+            if (!_.isEqual(_.sortBy(usernames), _.sortBy(assignerUsernames)))
                 return processClientError(
                     res,
                     400,
@@ -302,7 +302,7 @@ tasksRouter.put(
                 ).id
                 await taskAssignmentModel.update({ id: assignmentId }, { order: i })
             }
-            return res.status(204).json()
+            return res.status(200).json({ orders: usernames })
         } catch (err) {
             next(err)
         }

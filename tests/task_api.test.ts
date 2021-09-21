@@ -158,7 +158,7 @@ describe('PATCH /api/taskrequests/:id', () => {
     })
 })
 
-describe('PUT /api/tasks/:id/orders', () => {
+describe('PUT /api/tasks/:id/order', () => {
     let taskId = 0
     const newOrder = [testuser2.username, testuser1.username, user1.username]
     test('get task ID', async () => {
@@ -170,26 +170,26 @@ describe('PUT /api/tasks/:id/orders', () => {
     })
     test('except creator and admin, no-one can change order of task assignment', async () => {
         await api
-            .put(`/api/tasks/${taskId}/orders`)
+            .put(`/api/tasks/${taskId}/order`)
             .set('Authorization', 'Bearer ' + testuser2Token)
             .send({ order: newOrder })
             .expect(403)
 
         await api
-            .put(`/api/tasks/${taskId}/orders`)
+            .put(`/api/tasks/${taskId}/order`)
             .set('Authorization', 'Bearer ' + user1Token)
             .send({ order: newOrder })
             .expect(200)
 
         await api
-            .put(`/api/tasks/${taskId}/orders`)
+            .put(`/api/tasks/${taskId}/order`)
             .set('Authorization', 'Bearer ' + testuser1Token)
             .send({ order: newOrder })
             .expect(200)
     })
     test('change order without all assigners usernames will return 400', async () => {
         await api
-            .put(`/api/tasks/${taskId}/orders`)
+            .put(`/api/tasks/${taskId}/order`)
             .set('Authorization', 'Bearer ' + testuser1Token)
             .send({ order: [testuser1.username, user1.username] })
             .expect(400)
