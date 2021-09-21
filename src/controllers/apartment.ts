@@ -16,27 +16,20 @@ apartmentsRouter.post(
     middleware.accountExtractor,
     async (req: RequestAfterExtractor, res, next) => {
         if (!req.body.name) {
-            return processClientError(res, 400, 'Apartment name is missing')
+            const errorMessage = 'Invalid body: apartment name is missing'
+            return processClientError(res, 400, errorMessage)
         }
         try {
-            const newApartment = await apartmentModel.create(
-                req.body.name,
-                req.account.id,
-            )
-            await accountModel.update(
-                { id: req.account.id },
-                { apartment_id: newApartment.id },
-            )
+            const newApartment = await apartmentModel.create(req.body.name, req.account.id)
+            await accountModel.update({ id: req.account.id }, { apartment_id: newApartment.id })
             await invitationModel.deleteMany({ invitee_id: req.account.id })
             return res.status(201).json(newApartment)
         } catch (err) {
             if (err instanceof Prisma.PrismaClientKnownRequestError) {
                 if (err.code === 'P2014') {
-                    return processClientError(
-                        res,
-                        401,
-                        'One account can only create one apartment',
-                    )
+                    const errorMessage = 'ConditionNotMeet error: \
+							One account can only create one apartment'
+                    return processClientError(res, 401, errorMessage)
                 }
             }
             next(err)
@@ -55,23 +48,18 @@ apartmentsRouter.delete(
 
         try {
             const toDeleteApartment = await apartmentModel.find({ id })
-            if (toDeleteApartment === null)
-                return processClientError(
-                    res,
-                    404,
-                    `Apartment with id ${id} does not exist`,
-                )
-            if (toDeleteApartment.admin_id !== account.id) {
-                return processClientError(
-                    res,
-                    403,
-                    'User is forbidden to remove this apartment',
-                )
+            if (toDeleteApartment === null) {
+                const errorMessage = 'NotFound error'
+                return processClientError(res, 404, errorMessage)
             }
-            await accountModel.updateMany(
-                { apartment_id: toDeleteApartment.id },
-                { apartment_id: null },
-            )
+            if (toDeleteApartment.admin_id !== account.id) {
+                const errorMessage = 'Forbidden error'
+                return processClientError(res, 403, errorMessage)
+            }
+
+            const whereParams = { apartment_id: toDeleteApartment.id }
+            const dataParams = { apartment_id: null }
+            await accountModel.updateMany(whereParams, dataParams)
             await apartmentModel.deleteOne({ id })
             return res.status(204).json()
         } catch (err) {

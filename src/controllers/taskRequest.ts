@@ -24,15 +24,13 @@ async function createTaskAssignment(taskId: number): Promise<void> {
         //
         console.log('Notify: All requests for task: taskId has been accepted')
 
-        const taskAssignmentCreateData = _.sortBy(taskRequests, [
-            'assigner_id',
-        ]).map((request, i) => ({
+        const assignmentCreateData = _.sortBy(taskRequests, ['assigner_id']).map((request, i) => ({
             task_id: taskId,
             assigner_id: request.assigner_id,
             order: i,
         }))
 
-        await taskAssignmentModel.createMany(taskAssignmentCreateData)
+        await taskAssignmentModel.createMany(assignmentCreateData)
         await taskRequestModel.deleteMany({ task_id: taskId })
 
         console.log('Notify: Task Assignment is created')
@@ -52,7 +50,8 @@ taskRequestsRouter.patch(
 
         const validRequestStates = ['pending', 'accepted', 'rejected']
         if (!validRequestStates.includes(newState)) {
-            return processClientError(res, 400, 'Updated state is invalid')
+            const errorMessage = 'Invalid body: Updated state must be either accepted or rejected'
+            return processClientError(res, 400, errorMessage)
         }
 
         try {
@@ -60,19 +59,14 @@ taskRequestsRouter.patch(
                 id: taskRequestId,
             })
             if (!taskRequest || taskRequest.assigner.id !== req.account.id) {
-                return processClientError(
-                    res,
-                    403,
-                    'You dont have permission to patch or this task request no longer exists',
-                )
+                const errorMessage = 'Forbidden error'
+                return processClientError(res, 403, errorMessage)
             }
             const updatedTaskRequest = await taskRequestModel.update(
                 { id: taskRequestId },
                 { state: newState },
             )
-            res
-                .status(200)
-                .json({ msg: `Task request id ${taskRequestId} is now ${newState}` })
+            res.status(200).json({ msg: `Task request id ${taskRequestId} is now ${newState}` })
             await createTaskAssignment(updatedTaskRequest.task_id)
         } catch (err) {
             next(err)

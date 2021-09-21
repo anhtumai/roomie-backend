@@ -27,13 +27,10 @@ function validateTaskProperty(taskProperty: any): boolean {
     return true
 }
 
-function taskPropertyValidator(
-    request: Request,
-    response: Response,
-    next: NextFunction,
-): void {
+function taskPropertyValidator(request: Request, response: Response, next: NextFunction): void {
     if (!validateTaskProperty(request.body)) {
-        return processClientError(response, 400, 'Task property is invalid')
+        const errorMessage = 'Invalid body'
+        return processClientError(response, 400, errorMessage)
     }
     next()
 }
@@ -49,10 +46,10 @@ function assignersValidator(
     response: Response,
     next: NextFunction,
 ): void {
-    const errMessage = 'Assigners should contain list of assigners usernames'
+    const errorMessage = 'Invalid body: "assigners" must be string array'
 
     if (!validateStringArray(request.body.assigners))
-        return processClientError(response, 400, errMessage)
+        return processClientError(response, 400, errorMessage)
     next()
 }
 
@@ -61,16 +58,14 @@ function orderValidator(
     response: Response,
     next: NextFunction,
 ): void {
-    const errMessage = 'Orders should contain list of assigners usernames'
+    const errorMessage = 'Invalid body: "order" must be string array'
 
     if (!validateStringArray(request.body.order))
-        return processClientError(response, 400, errMessage)
+        return processClientError(response, 400, errorMessage)
     next()
 }
 
-function parseTaskProperty(
-    taskProperty: any,
-): Omit<Prisma.TaskUncheckedCreateInput, 'creator_id'> {
+function parseTaskProperty(taskProperty: any): Omit<Prisma.TaskUncheckedCreateInput, 'creator_id'> {
     const { name, description, frequency, difficulty, start, end } = taskProperty
 
     return {
@@ -90,8 +85,7 @@ async function updateDeletePermissionValidator(
 ): Promise<void> {
     try {
         const taskId = Number(request.params.id)
-        const errorMessage =
-      'Task doesn\'t exist or user is forbidden to edit/delete this task'
+        const errorMessage = 'Forbidden error'
         const task = await taskModel.find({ id: taskId })
         if (task !== null && task.creator_id === request.account.id) {
             return next()
@@ -118,8 +112,7 @@ async function viewPermissionValidator(
 ): Promise<void> {
     try {
         const taskId = Number(request.params.id)
-        const errorMessage =
-      'Task doesn\'t exist or user is forbidden to view this task'
+        const errorMessage = 'Forbidden error'
 
         const task = await taskModel.findJoinCreatorApartment({ id: taskId })
 
@@ -147,11 +140,8 @@ tasksRouter.post(
         const assignerUsernames: string[] = req.body.assigners
 
         if (!req.account.apartment) {
-            return processClientError(
-                res,
-                400,
-                'You can only create task if you are member of an apartment',
-            )
+            const errorMessage = 'ConditionNotMeet error: you must be a member of an apartment'
+            return processClientError(res, 400, errorMessage)
         }
         try {
             const assigners: (JoinApartmentAccount | null)[] = await Promise.all(
@@ -173,11 +163,9 @@ tasksRouter.post(
                 .map((params) => params[0])
 
             if (incompliantUsernames.length > 0) {
-                return processClientError(
-                    res,
-                    400,
-                    `These usernames: ${incompliantUsernames.join()} do not exist or are not member of this apartment`,
-                )
+                const errorMessage = `NotFound error: usernames: ${incompliantUsernames.join()}
+					are not member of this apartment`
+                return processClientError(res, 400, errorMessage)
             }
             const createdTask = await taskModel.create({
                 ...taskProperty,
@@ -207,15 +195,13 @@ tasksRouter.put(
         const taskId = Number(req.params.id)
 
         if (!validateTaskProperty(req.body)) {
-            return processClientError(res, 400, 'Task property is invalid')
+            const errorMessage = 'Invalid body'
+            return processClientError(res, 400, errorMessage)
         }
         const newTaskProperty = parseTaskProperty(req.body)
 
         try {
-            const updatedTask = await taskModel.update(
-                { id: taskId },
-                newTaskProperty,
-            )
+            const updatedTask = await taskModel.update({ id: taskId }, newTaskProperty)
             return res.status(200).json(updatedTask)
         } catch (err) {
             next(err)
@@ -251,15 +237,13 @@ tasksRouter.get(
     async (req: RequestAfterExtractor, res, next) => {
         const taskId = Number(req.params.id)
         try {
-            const responseTaskRequest =
-        await taskRequestModel.findResponseTaskRequest({
-            task_id: taskId,
-        })
+            const responseTaskRequest = await taskRequestModel.findResponseTaskRequest({
+                task_id: taskId,
+            })
             if (responseTaskRequest) return res.status(200).json(responseTaskRequest)
-            const responseTaskAssignment =
-        await taskAssignmentModel.findResponseTaskAssignment({
-            task_id: taskId,
-        })
+            const responseTaskAssignment = await taskAssignmentModel.findResponseTaskAssignment({
+                task_id: taskId,
+            })
             return res.status(200).json(responseTaskAssignment)
         } catch (err) {
             next(err)
@@ -277,25 +261,20 @@ tasksRouter.put(
         const taskId = Number(req.params.id)
         const usernames: string[] = req.body.order
         try {
-            const responseTaskAssignment =
-        await taskAssignmentModel.findResponseTaskAssignment({
-            task_id: taskId,
-        })
-            if (!responseTaskAssignment)
-                return processClientError(
-                    res,
-                    400,
-                    'Task hasn\'t been assigned to anyones',
-                )
+            const responseTaskAssignment = await taskAssignmentModel.findResponseTaskAssignment({
+                task_id: taskId,
+            })
+            if (!responseTaskAssignment) {
+                const errorMessage = 'ConditionNotMeet error: Task hasn\'t been assigned to anyones'
+                return processClientError(res, 400, errorMessage)
+            }
             const assignerUsernames = responseTaskAssignment.assignments.map(
                 (assignment) => assignment.assigner.username,
             )
-            if (!_.isEqual(_.sortBy(usernames), _.sortBy(assignerUsernames)))
-                return processClientError(
-                    res,
-                    400,
-                    'Orders must contain all member usernames',
-                )
+            if (!_.isEqual(_.sortBy(usernames), _.sortBy(assignerUsernames))) {
+                const errorMessage = 'Invalid body: Orders must contain all member usernames'
+                return processClientError(res, 400, errorMessage)
+            }
             for (const [i, username] of usernames.entries()) {
                 const assignmentId = responseTaskAssignment.assignments.find(
                     (assignment) => assignment.assigner.username === username,

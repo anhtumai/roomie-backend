@@ -3,7 +3,7 @@ import { Profile } from './account'
 
 import { prisma } from './client'
 
-type JoinTaksAssignment = {
+type JoinTaskAssignment = {
     id: number
     order: number
     task: Task
@@ -55,7 +55,7 @@ function toResponseTaskAssignments(
 
 async function findJoinTaskAssignments(
     whereParams: Prisma.TaskAssignmentWhereInput,
-): Promise<JoinTaksAssignment[]> {
+): Promise<JoinTaskAssignment[]> {
     const displayAssignments = await prisma.taskAssignment.findMany({
         where: whereParams,
         select: {

@@ -17,37 +17,31 @@ invitationsRouter.post(
         const inviteeUsername = req.body.username
 
         if (!req.body.username) {
-            return processClientError(res, 400, 'Invitee username is missing')
+            const errorMessage = 'Invalid body: Invitee username is missing'
+            return processClientError(res, 400, errorMessage)
         }
 
-        if (inviteeUsername === req.account.username)
-            return processClientError(res, 400, 'You cannot invite yourself')
-
+        if (inviteeUsername === req.account.username) {
+            const errorMessage = 'Invalid body: You cannot invite yourself'
+            return processClientError(res, 400, errorMessage)
+        }
         if (!req.account.apartment) {
-            return processClientError(
-                res,
-                404,
-                'You are not the member of any apartments',
-            )
+            const errorMessage = 'ConditionNotMeet error: You are not the member of any apartments'
+            return processClientError(res, 404, errorMessage)
         }
         try {
             const invitee = await accountModel.findJoinApartmentAccount({
                 username: inviteeUsername,
             })
             if (invitee === null) {
-                return processClientError(
-                    res,
-                    404,
-                    `Username ${inviteeUsername} does not exist`,
-                )
+                const errorMessage = `ConditionNotMeet error: ${inviteeUsername} does not exist`
+                return processClientError(res, 404, errorMessage)
             }
 
             if (invitee.apartment !== null) {
-                return processClientError(
-                    res,
-                    400,
-                    `Invitee ${inviteeUsername} is currently member of an apartment`,
-                )
+                const errorMessage = `ConditionNotMeet error: ${inviteeUsername} \
+				is currently member of an apartment`
+                return processClientError(res, 400, errorMessage)
             }
             const newInvitation = await invitationModel.create(
                 req.account.id,
@@ -73,15 +67,13 @@ invitationsRouter.post(
                 id: invitationId,
             })
             if (invitation === null || invitation.invitee.id !== req.account.id) {
-                return processClientError(
-                    res,
-                    403,
-                    'You are forbidden to reject this invitation or this invitation does not exist',
-                )
+                const errorMessage = 'Forbidden error'
+                return processClientError(res, 403, errorMessage)
             }
             await invitationModel.deleteOne({ id: invitationId })
             return res.status(200).json({
-                msg: `Reject invitation to ${invitation.apartment.name} from ${invitation.invitor.username}`,
+                msg: `Reject invitation to ${invitation.apartment.name} \
+				from ${invitation.invitor.username}`,
             })
         } catch (err) {
             next(err)
@@ -101,21 +93,18 @@ invitationsRouter.post(
                 id: invitationId,
             })
             if (invitation === null || invitation.invitee.id !== req.account.id) {
-                return processClientError(
-                    res,
-                    403,
-                    'You are forbidden to accept this invitation or this invitation does not exist',
-                )
+                const errorMessage = 'Forbidden error'
+                return processClientError(res, 403, errorMessage)
             }
 
-            await accountModel.update(
-                { id: req.account.id },
-                { apartment_id: invitation.apartment.id },
-            )
+            const whereParams = { id: req.account.id }
+            const dataParams = { apartment_id: invitation.apartment.id }
+            await accountModel.update(whereParams, dataParams)
             await invitationModel.deleteMany({ invitee_id: req.account.id })
 
             return res.status(200).json({
-                msg: `Accept invitation to ${invitation.apartment.name} from ${invitation.invitor.username}`,
+                msg: `Accept invitation to ${invitation.apartment.name} \
+				from ${invitation.invitor.username}`,
             })
         } catch (err) {
             next(err)
@@ -134,15 +123,9 @@ invitationsRouter.delete(
             const invitation = await invitationModel.find({
                 id: invitationId,
             })
-            if (
-                invitation === null ||
-        invitation.invitor.username !== req.account.username
-            ) {
-                return processClientError(
-                    res,
-                    403,
-                    'You are forbidden to delete this invitation or this invitation does not exist',
-                )
+            if (invitation === null || invitation.invitor.username !== req.account.username) {
+                const errorMessage = 'Forbidden error'
+                return processClientError(res, 403, errorMessage)
             }
 
             await invitationModel.deleteMany({ id: invitationId })
