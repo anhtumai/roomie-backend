@@ -9,6 +9,7 @@ import taskAssignmentModel from '../src/models/taskAssignment'
 
 import utils from './utils'
 import users from './users'
+import { response } from 'express'
 
 const api = supertest(app)
 
@@ -124,7 +125,7 @@ describe('PATCH /api/taskrequests/:id', () => {
             .send({ state: 'accepted' })
             .expect(403)
     })
-    test('patch invalid state should return 400', async () => {
+    test('patch with invalid state should return 400', async () => {
         await api
             .patch(`/api/taskrequests/${testuser1RequestId}`)
             .set('Authorization', 'Bearer ' + testuser1Token)
@@ -154,6 +155,44 @@ describe('PATCH /api/taskrequests/:id', () => {
 
         const allAssignments = await taskAssignmentModel.findJoinTaskAssignments({})
         expect(allAssignments.length).toEqual(3)
+    })
+})
+
+describe('PUT /api/tasks/:id/orders', () => {
+    let taskId = 0
+    const newOrder = [testuser2.username, testuser1.username, user1.username]
+    test('get task ID', async () => {
+        const response = await api
+            .get('/api/me/tasks')
+            .set('Authorization', 'Bearer ' + user1Token)
+
+        taskId = Number(response.body.assignments[0].task.id)
+    })
+    test('except creator and admin, no-one can change order of task assignment', async () => {
+        await api
+            .put(`/api/tasks/${taskId}/orders`)
+            .set('Authorization', 'Bearer ' + testuser2Token)
+            .send({ order: newOrder })
+            .expect(403)
+
+        await api
+            .put(`/api/tasks/${taskId}/orders`)
+            .set('Authorization', 'Bearer ' + user1Token)
+            .send({ order: newOrder })
+            .expect(200)
+
+        await api
+            .put(`/api/tasks/${taskId}/orders`)
+            .set('Authorization', 'Bearer ' + testuser1Token)
+            .send({ order: newOrder })
+            .expect(200)
+    })
+    test('change order without all assigners usernames will return 400', async () => {
+        await api
+            .put(`/api/tasks/${taskId}/orders`)
+            .set('Authorization', 'Bearer ' + testuser1Token)
+            .send({ order: [testuser1.username, user1.username] })
+            .expect(400)
     })
 })
 
