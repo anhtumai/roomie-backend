@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Response, NextFunction } from 'express'
 
 import _ from 'lodash'
 
@@ -6,12 +6,9 @@ import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import processClientError from '../util/error'
 import logger from '../util/logger'
-import middleware from '../util/middleware'
 import { RequestAfterExtractor } from '../types/express-middleware'
 
-const taskRequestsRouter = Router()
-
-async function createTaskAssignment(taskId: number): Promise<void> {
+async function createTaskAssignments(taskId: number): Promise<void> {
     try {
         const taskRequests = await taskRequestModel.findMany({ task_id: taskId })
         const requestStates = taskRequests.map((taskRequest) => taskRequest.state)
@@ -40,37 +37,39 @@ async function createTaskAssignment(taskId: number): Promise<void> {
     return
 }
 
-taskRequestsRouter.patch(
-    '/:id',
-    middleware.accountExtractor,
-    middleware.paramsIdValidator,
-    async (req: RequestAfterExtractor, res, next) => {
-        const taskRequestId = Number(req.params.id)
-        const newState = req.body.state
+async function updateState(
+    req: RequestAfterExtractor,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    const taskRequestId = Number(req.params.id)
+    const newState = req.body.state
 
-        const validRequestStates = ['pending', 'accepted', 'rejected']
-        if (!validRequestStates.includes(newState)) {
-            const errorMessage = 'Invalid body: Updated state must be either accepted or rejected'
-            return processClientError(res, 400, errorMessage)
-        }
+    const validRequestStates = ['pending', 'accepted', 'rejected']
+    if (!validRequestStates.includes(newState)) {
+        const errorMessage = 'Invalid body: Updated state must be either accepted or rejected'
+        return processClientError(res, 400, errorMessage)
+    }
 
-        try {
-            const taskRequest = await taskRequestModel.findJoinAssignerRequest({
-                id: taskRequestId,
-            })
-            if (!taskRequest || taskRequest.assigner.id !== req.account.id) {
-                const errorMessage = 'Forbidden error'
-                return processClientError(res, 403, errorMessage)
-            }
-            const updatedTaskRequest = await taskRequestModel.update(
-                { id: taskRequestId },
-                { state: newState },
-            )
-            res.status(200).json({ msg: `Task request id ${taskRequestId} is now ${newState}` })
-            await createTaskAssignment(updatedTaskRequest.task_id)
-        } catch (err) {
-            next(err)
+    try {
+        const taskRequest = await taskRequestModel.findJoinAssignerRequest({
+            id: taskRequestId,
+        })
+        if (!taskRequest || taskRequest.assigner.id !== req.account.id) {
+            const errorMessage = 'Forbidden error'
+            return processClientError(res, 403, errorMessage)
         }
-    },
-)
-export default taskRequestsRouter
+        const updatedTaskRequest = await taskRequestModel.update(
+            { id: taskRequestId },
+            { state: newState },
+        )
+        res.status(200).json({ msg: `Task request id ${taskRequestId} is now ${newState}` })
+        await createTaskAssignments(updatedTaskRequest.task_id)
+    } catch (err) {
+        next(err)
+    }
+}
+
+export default {
+    updateState,
+}

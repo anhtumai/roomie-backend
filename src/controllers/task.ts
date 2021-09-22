@@ -246,6 +246,34 @@ async function findResponseTask(
     }
 }
 
+async function findResponseTasks(
+    req: RequestAfterExtractor,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    const apartment = req.account.apartment
+    if (!apartment) {
+        res.status(204).json()
+        return
+    }
+    const accountId = req.account.id
+    try {
+        const taskRequests = await taskRequestModel.findJoinTaskRequests({
+            assigner_id: accountId,
+        })
+
+        const taskAssignments = await taskAssignmentModel.findJoinTaskAssignments({
+            assigner_id: accountId,
+        })
+        res.status(200).json({
+            requests: taskRequests,
+            assignments: taskAssignments,
+        })
+    } catch (err) {
+        next(err)
+    }
+}
+
 async function updateOrder(
     req: RequestAfterExtractor,
     res: Response,
@@ -282,6 +310,7 @@ async function updateOrder(
 
 export default {
     findResponseTask,
+    findResponseTasks,
     create,
     update,
     updateOrder,
