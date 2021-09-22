@@ -1,57 +1,20 @@
 import { Router } from 'express'
 
-import apartmentModel from '../models/apartment'
-import invitationModel from '../models/invitation'
 import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
+
+import accountController from '../controllers/account'
+import apartmentController from '../controllers/apartment'
+import invitationController from '../controllers/invitation'
 
 import middleware from '../util/middleware'
 import { RequestAfterExtractor } from '../types/express-middleware'
 
 const meRouter = Router()
 
-meRouter.get(
-    '/',
-    middleware.accountExtractor,
-    async (req: RequestAfterExtractor, res, next) => {
-        try {
-            return res.status(200).json(req.account)
-        } catch (err) {
-            next(err)
-        }
-    },
-)
+meRouter.get('/', middleware.accountExtractor, accountController.findJoinApartmentAccount)
 
-meRouter.get(
-    '/apartment',
-    middleware.accountExtractor,
-    async (req: RequestAfterExtractor, res, next) => {
-        const apartment = req.account.apartment
-        if (!apartment) return res.status(204).json()
-        try {
-            const apartmentId = apartment.id
-
-            const displayApartment =
-        await apartmentModel.findJoinAdminNMembersApartment({
-            id: apartmentId,
-        })
-            const memberIds = displayApartment.members.map((member) => member.id)
-            const responseTaskRequests =
-        await taskRequestModel.findResponseTaskRequests(memberIds)
-
-            const responseTaskAssignments =
-        await taskAssignmentModel.findResponseTaskAssignments(memberIds)
-
-            return res.status(200).json({
-                ...displayApartment,
-                task_requests: responseTaskRequests,
-                task_assignments: responseTaskAssignments,
-            })
-        } catch (err) {
-            next(err)
-        }
-    },
-)
+meRouter.get('/apartment', middleware.accountExtractor, apartmentController.findJoinTasksApartment)
 
 meRouter.get(
     '/tasks',
@@ -65,11 +28,9 @@ meRouter.get(
                 assigner_id: accountId,
             })
 
-            const taskAssignments = await taskAssignmentModel.findJoinTaskAssignments(
-                {
-                    assigner_id: accountId,
-                },
-            )
+            const taskAssignments = await taskAssignmentModel.findJoinTaskAssignments({
+                assigner_id: accountId,
+            })
             return res.status(200).json({
                 requests: taskRequests,
                 assignments: taskAssignments,
@@ -80,25 +41,6 @@ meRouter.get(
     },
 )
 
-meRouter.get(
-    '/invitations',
-    middleware.accountExtractor,
-    async (req: RequestAfterExtractor, res, next) => {
-        try {
-            const sentInvitations = await invitationModel.findMany({
-                invitor_id: req.account.id,
-            })
-            const receivedInvitations = await invitationModel.findMany({
-                invitee_id: req.account.id,
-            })
-            return res.status(200).json({
-                sent: sentInvitations,
-                received: receivedInvitations,
-            })
-        } catch (err) {
-            next(err)
-        }
-    },
-)
+meRouter.get('/invitations', middleware.accountExtractor, invitationController.findMany)
 
 export default meRouter

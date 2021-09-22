@@ -1,32 +1,32 @@
 import { Router } from 'express'
 
-import invitationsController from '../controllers/invitation'
+import invitationController from '../controllers/invitation'
 
 import middleware from '../util/middleware'
 
-const invitationsRouter = Router()
+const invitationRouter = Router()
 
-invitationsRouter.post('/', middleware.accountExtractor, invitationsController.create)
+invitationRouter.post('/', middleware.accountExtractor, invitationController.create)
 
-invitationsRouter.post(
+invitationRouter.post(
     '/:id/reject',
     middleware.accountExtractor,
     middleware.paramsIdValidator,
-    invitationsController.reject,
+    invitationController.reject,
 )
 
-invitationsRouter.post(
+invitationRouter.post(
     '/:id/accept',
     middleware.accountExtractor,
     middleware.paramsIdValidator,
-    invitationsController.accept,
+    invitationController.accept,
 )
 
-invitationsRouter.delete(
+invitationRouter.delete(
     '/:id',
     middleware.accountExtractor,
     middleware.paramsIdValidator,
-    invitationsController.deleteOne,
+    invitationController.deleteOne,
 )
 
-export default invitationsRouter
+export default invitationRouter

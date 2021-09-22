@@ -1,12 +1,12 @@
 import express from 'express'
 
-import meRouter from './controllers/me'
-import loginRouter from './controllers/login'
-import registerRouter from './controllers/register'
-import apartmentsRouter from './controllers/apartment'
-import invitationsRouter from './controllers/invitation'
-import tasksRouter from './controllers/task'
-import taskRequestRouter from './controllers/taskRequest'
+import meRouter from './routes/me'
+import loginRouter from './routes/login'
+import registerRouter from './routes/register'
+import apartmentsRouter from './routes/apartment'
+import invitationsRouter from './routes/invitation'
+import tasksRouter from './routes/task'
+import taskRequestRouter from './routes/taskRequest'
 
 import middleware from './util/middleware'
 

@@ -3,10 +3,43 @@ import { Prisma } from '@prisma/client'
 import apartmentModel from '../models/apartment'
 import accountModel from '../models/account'
 import invitationModel from '../models/invitation'
+import taskRequestModel from '../models/taskRequest'
+import taskAssignmentModel from '../models/taskAssignment'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 import { Response, NextFunction } from 'express'
+
+async function findJoinTasksApartment(
+    req: RequestAfterExtractor,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    const apartment = req.account.apartment
+    if (!apartment) {
+        res.status(204).json()
+        return
+    }
+    try {
+        const apartmentId = apartment.id
+
+        const displayApartment = await apartmentModel.findJoinAdminNMembersApartment({
+            id: apartmentId,
+        })
+        const memberIds = displayApartment.members.map((member) => member.id)
+        const responseTaskRequests = await taskRequestModel.findResponseTaskRequests(memberIds)
+
+        const responseAssignments = await taskAssignmentModel.findResponseTaskAssignments(memberIds)
+
+        res.status(200).json({
+            ...displayApartment,
+            task_requests: responseTaskRequests,
+            task_assignments: responseAssignments,
+        })
+    } catch (err) {
+        next(err)
+    }
+}
 
 async function create(
     req: RequestAfterExtractor,
@@ -65,6 +98,7 @@ async function deleteOne(
 }
 
 export default {
+    findJoinTasksApartment,
     create,
     deleteOne,
 }

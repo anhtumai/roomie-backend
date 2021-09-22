@@ -3,10 +3,30 @@ import { Response, NextFunction, Router } from 'express'
 import accountModel from '../models/account'
 import invitationModel from '../models/invitation'
 
-import middleware from '../util/middleware'
 import processClientError from '../util/error'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
+
+async function findMany(
+    req: RequestAfterExtractor,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const sentInvitations = await invitationModel.findMany({
+            invitor_id: req.account.id,
+        })
+        const receivedInvitations = await invitationModel.findMany({
+            invitee_id: req.account.id,
+        })
+        res.status(200).json({
+            sent: sentInvitations,
+            received: receivedInvitations,
+        })
+    } catch (err) {
+        next(err)
+    }
+}
 
 async function create(
     req: RequestAfterExtractor,
@@ -133,6 +153,7 @@ async function deleteOne(
 }
 
 export default {
+    findMany,
     create,
     reject,
     accept,

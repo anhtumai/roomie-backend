@@ -6,6 +6,19 @@ import { Prisma } from '@prisma/client'
 
 import accountModel from '../models/account'
 import processClientError from '../util/error'
+import { RequestAfterExtractor } from '../types/express-middleware'
+
+async function findJoinApartmentAccount(
+    req: RequestAfterExtractor,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        res.status(200).json(req.account)
+    } catch (err) {
+        next(err)
+    }
+}
 
 async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
     const body = req.body
@@ -67,6 +80,7 @@ async function create(req: Request, res: Response, next: NextFunction): Promise<
 }
 
 export default {
+    findJoinApartmentAccount,
     login,
     create,
 }
