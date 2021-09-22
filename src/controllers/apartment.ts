@@ -88,6 +88,7 @@ async function deleteOne(
         }
 
         const whereParams = { apartment_id: toDeleteApartment.id }
+        // @ts-ignore
         const dataParams = { apartment_id: null }
         await accountModel.updateMany(whereParams, dataParams)
         await apartmentModel.deleteOne({ id })

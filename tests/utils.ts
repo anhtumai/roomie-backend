@@ -21,7 +21,7 @@ async function registerUser(
     user: any,
 ): Promise<void> {
     await api
-        .post('/api/register')
+        .post('/api/accounts')
         .send(user)
         .expect(201)
         .expect('Content-Type', /application\/json/)
@@ -42,7 +42,7 @@ async function login(
 ): Promise<string> {
     const { username, password } = user
     const response = await api
-        .post('/api/login')
+        .post('/api/auth')
         .send({ username, password })
         .expect(200)
     return response.body.token

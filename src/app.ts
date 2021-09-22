@@ -1,14 +1,17 @@
 import express from 'express'
 
+import swaggerUI from 'swagger-ui-express'
+
 import meRouter from './routes/me'
-import loginRouter from './routes/login'
-import registerRouter from './routes/register'
+import authRouter from './routes/auth'
+import accountRouter from './routes/account'
 import apartmentsRouter from './routes/apartment'
 import invitationsRouter from './routes/invitation'
 import tasksRouter from './routes/task'
 import taskRequestRouter from './routes/taskRequest'
 
 import middleware from './util/middleware'
+import specs from './swaggerSpecs'
 
 const app = express()
 
@@ -18,11 +21,12 @@ app.use(middleware.tokenExtractor)
 
 app.use('/api/me', meRouter)
 app.use('/api/apartments', apartmentsRouter)
-app.use('/api/login', loginRouter)
-app.use('/api/register', registerRouter)
+app.use('/api/auth', authRouter)
+app.use('/api/accounts', accountRouter)
 app.use('/api/invitations', invitationsRouter)
 app.use('/api/tasks', tasksRouter)
 app.use('/api/taskrequests', taskRequestRouter)
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(specs))
 
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)
