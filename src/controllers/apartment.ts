@@ -11,10 +11,31 @@ import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 import { Response, NextFunction } from 'express'
 
+function validateApartmentProperty(apartmentProperty: any): boolean {
+  const { name } = apartmentProperty
+  return typeof name === 'string'
+}
+
+export async function adminPermissionValidator(
+  req: RequestAfterExtractor,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const id = Number(req.params.id)
+
+  const apartment = await apartmentModel.find({ id })
+
+  if (!apartment || apartment.admin_id !== req.account.id) {
+    const errorMessage = 'Forbidden error'
+    return processClientError(res, 403, errorMessage)
+  }
+  next()
+}
+
 async function findJoinTasksApartment(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const apartment = req.account.apartment
   if (!apartment) {
@@ -45,7 +66,7 @@ async function findJoinTasksApartment(
 async function create(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   if (!req.body.name) {
     const errorMessage = 'Invalid body: apartment name is missing'
@@ -67,37 +88,41 @@ async function create(
   }
 }
 
+async function update(
+  req: RequestAfterExtractor,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const apartmentId = Number(req.params.id)
+
+  if (!validateApartmentProperty(req.body)) {
+    const errorMessage = 'Invalid body'
+    return processClientError(res, 400, errorMessage)
+  }
+  const { name } = req.body
+  try {
+    const updatedApartment = await apartmentModel.update(apartmentId, name)
+    res.status(200).json(updatedApartment)
+  } catch (err) {
+    next(err)
+  }
+}
+
 async function deleteOne(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const id = Number(req.params.id)
 
-  const { account } = req
-
   try {
     const toDeleteApartment = await apartmentModel.findJoinAdminNMembersApartment({ id })
-    if (toDeleteApartment === null) {
-      const errorMessage = 'NotFound error'
-      return processClientError(res, 404, errorMessage)
-    }
-    if (toDeleteApartment.admin.id !== account.id) {
-      const errorMessage = 'Forbidden error'
-      return processClientError(res, 403, errorMessage)
-    }
-
-    const accountWhereParams = { apartment_id: toDeleteApartment.id }
-    // @ts-ignore
-    const accountDataParams = { apartment_id: null }
-    await accountModel.updateMany(accountWhereParams, accountDataParams)
 
     const taskWhereParams = {
       OR: toDeleteApartment.members.map((member) => ({
         creator_id: member.id,
       })),
     }
-
     await taskModel.deleteMany(taskWhereParams)
 
     await apartmentModel.deleteOne({ id })
@@ -110,5 +135,6 @@ async function deleteOne(
 export default {
   findJoinTasksApartment,
   create,
+  update,
   deleteOne,
 }

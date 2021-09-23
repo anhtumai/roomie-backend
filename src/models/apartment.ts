@@ -11,7 +11,7 @@ type JoinAdminNMembersApartment = {
 }
 
 async function findJoinAdminNMembersApartment(
-  whereParams: Prisma.ApartmentWhereInput,
+  whereParams: Prisma.ApartmentWhereInput
 ): Promise<JoinAdminNMembersApartment | null> {
   const displayApartment = await prisma.apartment.findFirst({
     where: whereParams,
@@ -58,6 +58,18 @@ async function create(name: string, adminId: number): Promise<Apartment> {
   return newApartment
 }
 
+async function update(apartmentId: number, name: string): Promise<Apartment> {
+  const updatedApartment = await prisma.apartment.update({
+    where: {
+      id: apartmentId,
+    },
+    data: {
+      name,
+    },
+  })
+  return updatedApartment
+}
+
 async function deleteOne(whereParams: Prisma.ApartmentWhereUniqueInput): Promise<void> {
   await prisma.apartment.delete({
     where: whereParams,
@@ -78,6 +90,7 @@ export default {
   find,
   findJoinAdminNMembersApartment,
   create,
+  update,
   deleteOne,
   deleteMany,
   deleteAll,
