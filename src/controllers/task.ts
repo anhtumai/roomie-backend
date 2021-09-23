@@ -24,14 +24,10 @@ function validateTaskProperty(taskProperty: any): boolean {
   return true
 }
 
-export function taskPropertyValidator(
-  request: Request,
-  response: Response,
-  next: NextFunction
-): void {
-  if (!validateTaskProperty(request.body)) {
+export function taskPropertyValidator(req: Request, res: Response, next: NextFunction): void {
+  if (!validateTaskProperty(req.body)) {
     const errorMessage = 'Invalid body'
-    return processClientError(response, 400, errorMessage)
+    return processClientError(res, 400, errorMessage)
   }
   next()
 }
@@ -43,25 +39,25 @@ function validateStringArray(arr: any): boolean {
 }
 
 export async function assignersValidator(
-  request: RequestAfterExtractor,
-  response: Response,
+  req: RequestAfterExtractor,
+  res: Response,
   next: NextFunction
 ): Promise<void> {
-  const assignerUsernames: string[] = request.body.assigners
+  const assignerUsernames: string[] = req.body.assigners
 
-  if (!request.account.apartment) {
+  if (!req.account.apartment) {
     const errorMessage = 'ConditionNotMeet error: you must be a member of an apartment'
-    return processClientError(response, 400, errorMessage)
+    return processClientError(res, 400, errorMessage)
   }
 
   if (!validateStringArray(assignerUsernames)) {
     const errorMessage = 'Invalid body: "assigners" must be string array'
-    return processClientError(response, 400, errorMessage)
+    return processClientError(res, 400, errorMessage)
   }
 
   try {
     const apartment = await apartmentModel.findJoinAdminNMembersApartment({
-      id: request.account.apartment.id,
+      id: req.account.apartment.id,
     })
     const members = apartment.members
     const memberUsernames = members.map((member) => member.username)
@@ -73,9 +69,9 @@ export async function assignersValidator(
       const errorMessage =
         `NotFound error: user(s) ${incompliantUsernames.join()} ` +
         'are not member of this apartment'
-      return processClientError(response, 400, errorMessage)
+      return processClientError(res, 400, errorMessage)
     }
-    response.locals.members = members
+    res.locals.members = members
     next()
   } catch (err) {
     next(err)
@@ -83,14 +79,13 @@ export async function assignersValidator(
 }
 
 export function orderValidator(
-  request: RequestAfterExtractor,
-  response: Response,
+  req: RequestAfterExtractor,
+  res: Response,
   next: NextFunction
 ): void {
   const errorMessage = 'Invalid body: "order" must be string array'
 
-  if (!validateStringArray(request.body.order))
-    return processClientError(response, 400, errorMessage)
+  if (!validateStringArray(req.body.order)) return processClientError(res, 400, errorMessage)
   next()
 }
 
@@ -108,52 +103,48 @@ function parseTaskProperty(taskProperty: any): Omit<Prisma.TaskUncheckedCreateIn
 }
 
 export async function creatorNAdminPermissionValidator(
-  request: RequestAfterExtractor,
-  response: Response,
+  req: RequestAfterExtractor,
+  res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    const taskId = Number(request.params.id)
+    const taskId = Number(req.params.id)
     const errorMessage = 'Forbidden error'
     const task = await taskModel.find({ id: taskId })
 
-    if (!task || !request.account.apartment) {
-      return processClientError(response, 403, errorMessage)
+    if (!task || !req.account.apartment) {
+      return processClientError(res, 403, errorMessage)
     }
 
-    if (task.creator_id === request.account.id) {
+    if (task.creator_id === req.account.id) {
       return next()
     }
 
     const apartment = await apartmentModel.find({
-      id: request.account.apartment.id,
+      id: req.account.apartment.id,
     })
-    if (apartment && apartment.admin_id === request.account.id) {
+    if (apartment && apartment.admin_id === req.account.id) {
       return next()
     }
-    return processClientError(response, 403, errorMessage)
+    return processClientError(res, 403, errorMessage)
   } catch (err) {
     next(err)
   }
 }
 
 export async function membersPermissionValidator(
-  request: RequestAfterExtractor,
-  response: Response,
+  req: RequestAfterExtractor,
+  res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    const taskId = Number(request.params.id)
+    const taskId = Number(req.params.id)
     const errorMessage = 'Forbidden error'
 
     const task = await taskModel.findJoinCreatorApartment({ id: taskId })
 
-    if (
-      !task ||
-      !request.account.apartment ||
-      task.creator.apartment_id != request.account.apartment.id
-    ) {
-      return processClientError(response, 403, errorMessage)
+    if (!task || !req.account.apartment || task.creator.apartment_id != req.account.apartment.id) {
+      return processClientError(res, 403, errorMessage)
     }
     next()
   } catch (err) {
