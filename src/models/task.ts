@@ -7,18 +7,14 @@ type JoinCreatorTask = {
     }
 }
 
-async function create(
-    dataParams: Prisma.TaskUncheckedCreateInput,
-): Promise<Task> {
+async function create(dataParams: Prisma.TaskUncheckedCreateInput): Promise<Task> {
     const task = await prisma.task.create({
         data: dataParams,
     })
     return task
 }
 
-async function find(
-    whereParams: Prisma.TaskWhereUniqueInput,
-): Promise<Task | null> {
+async function find(whereParams: Prisma.TaskWhereUniqueInput): Promise<Task | null> {
     const task = await prisma.task.findFirst({
         where: whereParams,
     })
@@ -59,9 +55,7 @@ async function update(
     return updatedTask
 }
 
-async function deleteOne(
-    whereParams: Prisma.TaskWhereUniqueInput,
-): Promise<Task> {
+async function deleteOne(whereParams: Prisma.TaskWhereUniqueInput): Promise<Task> {
     const deletedTask = await prisma.task.delete({
         where: whereParams,
     })
@@ -88,5 +82,6 @@ export default {
     findMany,
     update,
     deleteOne,
+    deleteMany,
     deleteAll,
 }

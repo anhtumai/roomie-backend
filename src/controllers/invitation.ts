@@ -58,8 +58,8 @@ async function create(
         }
 
         if (invitee.apartment !== null) {
-            const errorMessage = `ConditionNotMeet error: ${inviteeUsername} \
-				is currently member of an apartment`
+            const errorMessage =
+        `ConditionNotMeet error: ${inviteeUsername} ` + 'is currently member of an apartment'
             return processClientError(res, 400, errorMessage)
         }
         const newInvitation = await invitationModel.create(
@@ -69,6 +69,10 @@ async function create(
         )
         res.status(201).json(newInvitation)
     } catch (err) {
+        if (err.code === 'P2002') {
+            const errorMessage = 'Conflict error: You had sent an invitation to this person'
+            return processClientError(res, 400, errorMessage)
+        }
         next(err)
     }
 }
@@ -90,8 +94,9 @@ async function reject(
         }
         await invitationModel.deleteOne({ id: invitationId })
         res.status(200).json({
-            msg: `Reject invitation to ${invitation.apartment.name} \
-				from ${invitation.invitor.username}`,
+            msg:
+        `Reject invitation to ${invitation.apartment.name} ` +
+        `from ${invitation.invitor.username}`,
         })
     } catch (err) {
         next(err)
@@ -120,8 +125,9 @@ async function accept(
         await invitationModel.deleteMany({ invitee_id: req.account.id })
 
         res.status(200).json({
-            msg: `Accept invitation to ${invitation.apartment.name} \
-				from ${invitation.invitor.username}`,
+            msg:
+        `Accept invitation to ${invitation.apartment.name} ` +
+        `from ${invitation.invitor.username}`,
         })
     } catch (err) {
         next(err)

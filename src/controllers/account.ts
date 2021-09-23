@@ -70,8 +70,8 @@ async function create(req: Request, res: Response, next: NextFunction): Promise<
     } catch (err) {
         if (err instanceof Prisma.PrismaClientKnownRequestError) {
             if (err.code === 'P2002') {
-                const errorMessage = 'ConditionNotMeet error: \
-						User with the same name has already existed'
+                const errorMessage =
+          'ConditionNotMeet error: User with the same username has already existed'
                 return processClientError(res, 400, errorMessage)
             }
         }

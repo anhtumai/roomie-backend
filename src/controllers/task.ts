@@ -88,19 +88,22 @@ export async function creatorNAdminPermissionValidator(
         const taskId = Number(request.params.id)
         const errorMessage = 'Forbidden error'
         const task = await taskModel.find({ id: taskId })
-        if (task !== null && task.creator_id === request.account.id) {
-            return next()
-        }
-        if (!request.account.apartment) {
+
+        if (!task || !request.account.apartment) {
             return processClientError(response, 403, errorMessage)
         }
+
+        if (task.creator_id === request.account.id) {
+            return next()
+        }
+
         const apartment = await apartmentModel.find({
             id: request.account.apartment.id,
         })
-        if (!apartment || apartment.admin_id !== request.account.id) {
-            return processClientError(response, 403, errorMessage)
+        if (apartment && apartment.admin_id === request.account.id) {
+            return next()
         }
-        next()
+        return processClientError(response, 403, errorMessage)
     } catch (err) {
         next(err)
     }
@@ -163,8 +166,9 @@ async function create(
             .map((params) => params[0])
 
         if (incompliantUsernames.length > 0) {
-            const errorMessage = `NotFound error: usernames: ${incompliantUsernames.join()}
-					are not member of this apartment`
+            const errorMessage =
+        `NotFound error: usernames: ${incompliantUsernames.join()} ` +
+        'are not member of this apartment'
             return processClientError(res, 400, errorMessage)
         }
         const createdTask = await taskModel.create({
