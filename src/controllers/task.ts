@@ -27,7 +27,7 @@ function validateTaskProperty(taskProperty: any): boolean {
 export function taskPropertyValidator(
   request: Request,
   response: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void {
   if (!validateTaskProperty(request.body)) {
     const errorMessage = 'Invalid body'
@@ -45,7 +45,7 @@ function validateStringArray(arr: any): boolean {
 export function assignersValidator(
   request: RequestAfterExtractor,
   response: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void {
   const errorMessage = 'Invalid body: "assigners" must be string array'
 
@@ -57,7 +57,7 @@ export function assignersValidator(
 export function orderValidator(
   request: RequestAfterExtractor,
   response: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void {
   const errorMessage = 'Invalid body: "order" must be string array'
 
@@ -82,7 +82,7 @@ function parseTaskProperty(taskProperty: any): Omit<Prisma.TaskUncheckedCreateIn
 export async function creatorNAdminPermissionValidator(
   request: RequestAfterExtractor,
   response: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   try {
     const taskId = Number(request.params.id)
@@ -112,7 +112,7 @@ export async function creatorNAdminPermissionValidator(
 export async function membersPermissionValidator(
   request: RequestAfterExtractor,
   response: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   try {
     const taskId = Number(request.params.id)
@@ -136,7 +136,7 @@ export async function membersPermissionValidator(
 async function create(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const taskProperty = parseTaskProperty(req.body)
 
@@ -147,23 +147,15 @@ async function create(
     return processClientError(res, 400, errorMessage)
   }
   try {
-    const assigners: (JoinApartmentAccount | null)[] = await Promise.all(
-      assignerUsernames.map(async (username) => {
-        const account = await accountModel.findJoinApartmentAccount({
-          username,
-        })
-        return account
-      }),
+    const apartment = await apartmentModel.findJoinAdminNMembersApartment({
+      id: req.account.apartment.id,
+    })
+    const members = apartment.members
+    const memberUsernames = members.map((member) => member.username)
+
+    const incompliantUsernames = assignerUsernames.filter(
+      (username) => !memberUsernames.includes(username)
     )
-    const incompliantUsernames = _.zip(assignerUsernames, assigners)
-      .filter((params) => {
-        const account = params[1]
-        if (!account) return true
-        if (!account.apartment) return true
-        if (account.apartment.id !== req.account.apartment.id) return true
-        return false
-      })
-      .map((params) => params[0])
 
     if (incompliantUsernames.length > 0) {
       const errorMessage =
@@ -176,8 +168,9 @@ async function create(
       creator_id: req.account.id,
     })
 
-    const taskRequestCreateData = assigners.map((displayAccount) => ({
-      assigner_id: displayAccount.id,
+    const assigners = members.filter((member) => assignerUsernames.includes(member.username))
+    const taskRequestCreateData = assigners.map((profile) => ({
+      assigner_id: profile.id,
       task_id: createdTask.id,
     }))
     await taskRequestModel.createMany(taskRequestCreateData)
@@ -191,7 +184,7 @@ async function create(
 async function update(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const taskId = Number(req.params.id)
 
@@ -212,13 +205,12 @@ async function update(
 async function deleteOne(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const taskId = Number(req.params.id)
 
   try {
     await taskModel.deleteOne({ id: taskId })
-
     res.status(204).json()
   } catch (err) {
     next(err)
@@ -228,7 +220,7 @@ async function deleteOne(
 async function findResponseTask(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const taskId = Number(req.params.id)
   try {
@@ -251,7 +243,7 @@ async function findResponseTask(
 async function findResponseTasks(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const apartment = req.account.apartment
   if (!apartment) {
@@ -279,7 +271,7 @@ async function findResponseTasks(
 async function updateOrder(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const taskId = Number(req.params.id)
   const usernames: string[] = req.body.order
@@ -292,7 +284,7 @@ async function updateOrder(
       return processClientError(res, 400, errorMessage)
     }
     const assignerUsernames = responseTaskAssignment.assignments.map(
-      (assignment) => assignment.assigner.username,
+      (assignment) => assignment.assigner.username
     )
     if (!_.isEqual(_.sortBy(usernames), _.sortBy(assignerUsernames))) {
       const errorMessage = 'Invalid body: Orders must contain all member usernames'
@@ -300,11 +292,23 @@ async function updateOrder(
     }
     for (const [i, username] of usernames.entries()) {
       const assignmentId = responseTaskAssignment.assignments.find(
-        (assignment) => assignment.assigner.username === username,
+        (assignment) => assignment.assigner.username === username
       ).id
       await taskAssignmentModel.update({ id: assignmentId }, { order: i })
     }
     res.status(200).json({ order: usernames })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function updateAssigners(
+  req: RequestAfterExtractor,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const usernames: string[] = req.body.assigners
   } catch (err) {
     next(err)
   }
