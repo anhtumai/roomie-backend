@@ -306,7 +306,7 @@ async function updateOrder(
             ).id
             await taskAssignmentModel.update({ id: assignmentId }, { order: i })
         }
-        res.status(200).json({ orders: usernames })
+        res.status(200).json({ order: usernames })
     } catch (err) {
         next(err)
     }
