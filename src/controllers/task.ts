@@ -276,7 +276,7 @@ async function updateOrder(
   next: NextFunction
 ): Promise<void> {
   const taskId = Number(req.params.id)
-  const usernames: string[] = req.body.order
+  const usernamesOrder: string[] = req.body.order
   try {
     const responseTaskAssignment = await taskAssignmentModel.findResponseTaskAssignment({
       task_id: taskId,
@@ -288,17 +288,17 @@ async function updateOrder(
     const assignerUsernames = responseTaskAssignment.assignments.map(
       (assignment) => assignment.assigner.username
     )
-    if (!_.isEqual(_.sortBy(usernames), _.sortBy(assignerUsernames))) {
-      const errorMessage = 'Invalid body: Orders must contain all member usernames'
+    if (!_.isEqual(_.sortBy(usernamesOrder), _.sortBy(assignerUsernames))) {
+      const errorMessage = 'Invalid body: Order must contain all member usernames'
       return processClientError(res, 400, errorMessage)
     }
-    for (const [i, username] of usernames.entries()) {
+    for (const [i, username] of usernamesOrder.entries()) {
       const assignmentId = responseTaskAssignment.assignments.find(
         (assignment) => assignment.assigner.username === username
       ).id
       await taskAssignmentModel.update({ id: assignmentId }, { order: i })
     }
-    res.status(200).json({ order: usernames })
+    res.status(200).json({ order: usernamesOrder })
   } catch (err) {
     next(err)
   }
