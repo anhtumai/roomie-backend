@@ -45,25 +45,25 @@ describe('POST /api/accounts', () => {
     })
 })
 
-describe('POST /api/auth', () => {
+describe('POST /api/auth/login', () => {
     test('login with invalid credentials', async () => {
         await api
-            .post('/api/auth')
+            .post('/api/auth/login')
             .send({ username: testuser1.username, password: testuser1.password })
             .expect(401)
     })
 
     test('login with missing info', async () => {
-        await api.post('/api/auth').send({}).expect(400)
+        await api.post('/api/auth/login').send({}).expect(400)
         await api
-            .post('/api/auth')
+            .post('/api/auth/login')
             .send({ password: 'anhtumaipassword' })
             .expect(400)
     })
 
     test('login with valid credentials', async () => {
         const validLoginResponse = await api
-            .post('/api/auth')
+            .post('/api/auth/login')
             .send({ username: user1.username, password: user1.password })
             .expect(200)
         expect(typeof validLoginResponse.body.token).toEqual('string')

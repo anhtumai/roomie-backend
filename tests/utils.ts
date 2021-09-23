@@ -42,7 +42,7 @@ async function login(
 ): Promise<string> {
     const { username, password } = user
     const response = await api
-        .post('/api/auth')
+        .post('/api/auth/login')
         .send({ username, password })
         .expect(200)
     return response.body.token
