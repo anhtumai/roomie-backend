@@ -217,8 +217,6 @@ async function deleteOne(
   const taskId = Number(req.params.id)
 
   try {
-    await taskRequestModel.deleteMany({ task_id: taskId })
-    await taskAssignmentModel.deleteMany({ task_id: taskId })
     await taskModel.deleteOne({ id: taskId })
 
     res.status(204).json()
