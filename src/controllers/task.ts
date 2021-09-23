@@ -6,7 +6,7 @@ import taskModel from '../models/task'
 import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import apartmentModel from '../models/apartment'
-import accountModel, { JoinApartmentAccount } from '../models/account'
+import { Profile } from '../models/account'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
@@ -42,16 +42,44 @@ function validateStringArray(arr: any): boolean {
   return true
 }
 
-export function assignersValidator(
+export async function assignersValidator(
   request: RequestAfterExtractor,
   response: Response,
   next: NextFunction
-): void {
-  const errorMessage = 'Invalid body: "assigners" must be string array'
+): Promise<void> {
+  const assignerUsernames: string[] = request.body.assigners
 
-  if (!validateStringArray(request.body.assigners))
+  if (!request.account.apartment) {
+    const errorMessage = 'ConditionNotMeet error: you must be a member of an apartment'
     return processClientError(response, 400, errorMessage)
-  next()
+  }
+
+  if (!validateStringArray(assignerUsernames)) {
+    const errorMessage = 'Invalid body: "assigners" must be string array'
+    return processClientError(response, 400, errorMessage)
+  }
+
+  try {
+    const apartment = await apartmentModel.findJoinAdminNMembersApartment({
+      id: request.account.apartment.id,
+    })
+    const members = apartment.members
+    const memberUsernames = members.map((member) => member.username)
+
+    const incompliantUsernames = assignerUsernames.filter(
+      (username) => !memberUsernames.includes(username)
+    )
+    if (incompliantUsernames.length > 0) {
+      const errorMessage =
+        `NotFound error: user(s) ${incompliantUsernames.join()} ` +
+        'are not member of this apartment'
+      return processClientError(response, 400, errorMessage)
+    }
+    response.locals.members = members
+    next()
+  } catch (err) {
+    next(err)
+  }
 }
 
 export function orderValidator(
@@ -133,47 +161,30 @@ export async function membersPermissionValidator(
   }
 }
 
+async function createTaskRequests(assigners: Profile[], taskId: number): Promise<void> {
+  const taskRequestCreateData = assigners.map((profile) => ({
+    assigner_id: profile.id,
+    task_id: taskId,
+  }))
+  await taskRequestModel.createMany(taskRequestCreateData)
+}
+
 async function create(
   req: RequestAfterExtractor,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   const taskProperty = parseTaskProperty(req.body)
-
   const assignerUsernames: string[] = req.body.assigners
+  const members: Profile[] = res.locals.members
 
-  if (!req.account.apartment) {
-    const errorMessage = 'ConditionNotMeet error: you must be a member of an apartment'
-    return processClientError(res, 400, errorMessage)
-  }
   try {
-    const apartment = await apartmentModel.findJoinAdminNMembersApartment({
-      id: req.account.apartment.id,
-    })
-    const members = apartment.members
-    const memberUsernames = members.map((member) => member.username)
-
-    const incompliantUsernames = assignerUsernames.filter(
-      (username) => !memberUsernames.includes(username)
-    )
-
-    if (incompliantUsernames.length > 0) {
-      const errorMessage =
-        `NotFound error: usernames: ${incompliantUsernames.join()} ` +
-        'are not member of this apartment'
-      return processClientError(res, 400, errorMessage)
-    }
     const createdTask = await taskModel.create({
       ...taskProperty,
       creator_id: req.account.id,
     })
-
     const assigners = members.filter((member) => assignerUsernames.includes(member.username))
-    const taskRequestCreateData = assigners.map((profile) => ({
-      assigner_id: profile.id,
-      task_id: createdTask.id,
-    }))
-    await taskRequestModel.createMany(taskRequestCreateData)
+    await createTaskRequests(assigners, createdTask.id)
 
     res.status(201).json(createdTask)
   } catch (err) {
@@ -307,8 +318,17 @@ async function updateAssigners(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  const assignerUsernames: string[] = req.body.assigners
+  const taskId = Number(req.params.id)
+  const members: Profile[] = res.locals.members
+
   try {
-    const usernames: string[] = req.body.assigners
+    await taskRequestModel.deleteMany({ task_id: taskId })
+    await taskAssignmentModel.deleteMany({ task_id: taskId })
+
+    const assigners = members.filter((member) => assignerUsernames.includes(member.username))
+    await createTaskRequests(assigners, taskId)
+    res.status(200).json({ assigners: assignerUsernames })
   } catch (err) {
     next(err)
   }
@@ -320,5 +340,6 @@ export default {
   create,
   update,
   updateOrder,
+  updateAssigners,
   deleteOne,
 }

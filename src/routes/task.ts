@@ -17,43 +17,52 @@ const tasksRouter = Router()
 tasksRouter.post(
   '/',
   taskPropertyValidator,
-  assignersValidator,
   middleware.accountExtractor,
-  taskController.create,
+  assignersValidator,
+  taskController.create
 )
 
 tasksRouter.put(
   '/:id',
+  middleware.paramsIdValidator,
   taskPropertyValidator,
   middleware.accountExtractor,
-  middleware.paramsIdValidator,
   creatorNAdminPermissionValidator,
-  taskController.update,
+  taskController.update
 )
 
 tasksRouter.delete(
   '/:id',
-  middleware.accountExtractor,
   middleware.paramsIdValidator,
+  middleware.accountExtractor,
   creatorNAdminPermissionValidator,
-  taskController.deleteOne,
+  taskController.deleteOne
 )
 
 tasksRouter.get(
   '/:id',
-  middleware.accountExtractor,
   middleware.paramsIdValidator,
+  middleware.accountExtractor,
   membersPermissionValidator,
-  taskController.findResponseTask,
+  taskController.findResponseTask
 )
 
 tasksRouter.put(
   '/:id/order',
+  middleware.paramsIdValidator,
   orderValidator,
   middleware.accountExtractor,
-  middleware.paramsIdValidator,
   creatorNAdminPermissionValidator,
-  taskController.updateOrder,
+  taskController.updateOrder
+)
+
+tasksRouter.put(
+  '/:id/assigners',
+  middleware.paramsIdValidator,
+  middleware.accountExtractor,
+  creatorNAdminPermissionValidator,
+  assignersValidator,
+  taskController.updateAssigners
 )
 
 export default tasksRouter
