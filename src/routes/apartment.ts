@@ -9,10 +9,10 @@ const apartmentsRouter = Router()
 apartmentsRouter.post('/', middleware.accountExtractor, apartmentController.create)
 
 apartmentsRouter.delete(
-    '/:id',
-    middleware.accountExtractor,
-    middleware.paramsIdValidator,
-    apartmentController.deleteOne,
+  '/:id',
+  middleware.accountExtractor,
+  middleware.paramsIdValidator,
+  apartmentController.deleteOne,
 )
 
 export default apartmentsRouter

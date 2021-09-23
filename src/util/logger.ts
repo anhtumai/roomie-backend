@@ -1,12 +1,12 @@
 const info = (...params: any[]) => {
-    console.log(...params)
+  console.log(...params)
 }
 
 const error = (...params: any[]) => {
-    console.error(...params)
+  console.error(...params)
 }
 
 export default {
-    info,
-    error,
+  info,
+  error,
 }

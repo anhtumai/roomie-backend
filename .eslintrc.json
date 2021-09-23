@@ -12,14 +12,15 @@
   "plugins": ["@typescript-eslint"],
   "rules": {
     "max-len": [2, { "code": 100, "tabWidth": 4, "ignoreUrls": true }],
-    "indent": "off",
+    "indent": ["error", 2],
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "single"],
     "semi": ["error", "never"],
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off",
-    "@typescript-eslint/indent": ["error", 4],
+    "@typescript-eslint/indent": ["error", 2],
     "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/ban-types": [
       "error",
       {
