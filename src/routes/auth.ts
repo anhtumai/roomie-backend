@@ -4,6 +4,6 @@ import accountController from '../controllers/account'
 
 const authRouter = Router()
 
-authRouter.post('/', accountController.login)
+authRouter.post('/login', accountController.login)
 
 export default authRouter

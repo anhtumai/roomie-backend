@@ -36,7 +36,7 @@ tasksRouter.delete(
     middleware.accountExtractor,
     middleware.paramsIdValidator,
     creatorNAdminPermissionValidator,
-    taskController.create,
+    taskController.deleteOne,
 )
 
 tasksRouter.get(
