@@ -8,6 +8,7 @@ datasource db {
 
 generator client {
 	provider = "prisma-client-js"
+	previewFeatures = ["referentialActions"]
 }
 
 model Account {
@@ -73,7 +74,7 @@ model TaskRequest {
 	assigner	Account	@relation("RequestTo", fields: [assigner_id], references: [id])
 	assigner_id	Int
 	
-	task		Task	@relation("TaskRequest", fields: [task_id], references: [id])
+	task		Task	@relation("TaskRequest", fields: [task_id], references: [id], onDelete: Cascade)
 	task_id		Int
 	
 	state		RequestType	@default(pending)
@@ -87,7 +88,7 @@ model TaskAssignment {
 	assigner		Account	@relation("AssignTo", fields: [assigner_id], references: [id])
 	assigner_id		Int
 
-	task			Task	@relation("TaskAssignment", fields: [task_id], references: [id])
+	task			Task	@relation("TaskAssignment", fields: [task_id], references: [id], onDelete: Cascade)
 	task_id			Int
 	
 	order			Int

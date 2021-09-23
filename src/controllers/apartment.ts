@@ -5,6 +5,7 @@ import accountModel from '../models/account'
 import invitationModel from '../models/invitation'
 import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
+import taskModel from '../models/task'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
@@ -58,9 +59,8 @@ async function create(
     } catch (err) {
         if (err instanceof Prisma.PrismaClientKnownRequestError) {
             if (err.code === 'P2014') {
-                const errorMessage = 'ConditionNotMeet error: \
-				One account can only create one apartment'
-                return processClientError(res, 401, errorMessage)
+                const errorMessage = 'ConditionNotMeet error: User can only live in 1 apartment'
+                return processClientError(res, 400, errorMessage)
             }
         }
         next(err)
@@ -77,20 +77,29 @@ async function deleteOne(
     const { account } = req
 
     try {
-        const toDeleteApartment = await apartmentModel.find({ id })
+        const toDeleteApartment = await apartmentModel.findJoinAdminNMembersApartment({ id })
         if (toDeleteApartment === null) {
             const errorMessage = 'NotFound error'
             return processClientError(res, 404, errorMessage)
         }
-        if (toDeleteApartment.admin_id !== account.id) {
+        if (toDeleteApartment.admin.id !== account.id) {
             const errorMessage = 'Forbidden error'
             return processClientError(res, 403, errorMessage)
         }
 
-        const whereParams = { apartment_id: toDeleteApartment.id }
+        const accountWhereParams = { apartment_id: toDeleteApartment.id }
         // @ts-ignore
-        const dataParams = { apartment_id: null }
-        await accountModel.updateMany(whereParams, dataParams)
+        const accountDataParams = { apartment_id: null }
+        await accountModel.updateMany(accountWhereParams, accountDataParams)
+
+        const taskWhereParams = {
+            OR: toDeleteApartment.members.map((member) => ({
+                creator_id: member.id,
+            })),
+        }
+
+        await taskModel.deleteMany(taskWhereParams)
+
         await apartmentModel.deleteOne({ id })
         res.status(204).json()
     } catch (err) {
