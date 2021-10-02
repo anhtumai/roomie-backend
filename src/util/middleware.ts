@@ -23,7 +23,7 @@ function errorHandler(
   error: Error,
   request: Request,
   response: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void {
   logger.error(error.message)
 
@@ -47,11 +47,7 @@ function tokenExtractor(request: Request, response: Response, next: NextFunction
   next()
 }
 
-function paramsIdValidator(
-  request: Request,
-  response: Response,
-  next: NextFunction,
-): void | Response {
+function paramsIdValidator(request: Request, response: Response, next: NextFunction): void {
   const id = Number(request.params.id)
   if (isNaN(id)) {
     return processClientError(response, 400, 'Param ID must be number')
@@ -62,7 +58,7 @@ function paramsIdValidator(
 async function accountExtractor(
   request: RequestAfterExtractor,
   response: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   try {
     if (request.token === undefined) {
