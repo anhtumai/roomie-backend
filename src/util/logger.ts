@@ -1,6 +1,8 @@
+import util from 'util'
+
 import winston from 'winston'
 
-const logger = winston.createLogger({
+const winstonLogger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
     winston.format.simple(),
@@ -18,4 +20,15 @@ const logger = winston.createLogger({
   ],
 })
 
-export default logger
+function info(...msg: any[]): void {
+  winstonLogger.info(util.format(...msg))
+}
+
+function error(...msg: any[]): void {
+  winstonLogger.error(util.format(...msg))
+}
+
+export default {
+  info,
+  error,
+}
