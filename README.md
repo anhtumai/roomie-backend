@@ -2,11 +2,15 @@
 
 > An app helps roommates in one apartment manage housework
 
+You can test the software via [the Heroku URL](https://roomie-app-backend.herokuapp.com/)
+
+Credentials: username: `anhtumai`, password: `anhtumaipassword`
+
 ## Documentation
 
-ERD digram: [ERD](https://drive.google.com/file/d/13wO82H7EFu7UNHLWs4OFDugKqwMUVbo1/view?usp=sharing)
+ERD digram: [ERD digram link](https://drive.google.com/file/d/13wO82H7EFu7UNHLWs4OFDugKqwMUVbo1/view?usp=sharing)
 
-API documentation with Postman: [Docs](https://documenter.getpostman.com/view/4337348/UUxwCov3)
+API documentation with Postman: [Docs link](https://documenter.getpostman.com/view/4337348/UUxwCov3)
 
 ## Functionality
 
