@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 
 import { Request, Response, NextFunction } from 'express'
 import { Prisma } from '@prisma/client'
+import jwt_decode from 'jwt-decode'
 
 import accountModel from '../models/account'
 import processClientError from '../util/error'
@@ -11,7 +12,7 @@ import { RequestAfterExtractor } from '../types/express-middleware'
 async function findJoinApartmentAccount(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   try {
     res.status(200).json(req.account)
@@ -47,7 +48,15 @@ async function login(req: Request, res: Response, next: NextFunction): Promise<v
       expiresIn: 3 * 60 * 60,
     })
 
-    res.status(200).send({ token, username: account.username, name: account.name })
+    const decodedToken = jwt_decode(token)
+
+    res.status(200).send({
+      token,
+      username: account.username,
+      name: account.name,
+      id: account.id,
+      expiresAt: (decodedToken as any).exp,
+    })
   } catch (err) {
     next(err)
   }
