@@ -1,4 +1,5 @@
 import express from 'express'
+import cors from 'cors'
 
 import meRouter from './routes/me'
 import authRouter from './routes/auth'
@@ -16,6 +17,7 @@ app.use(express.json())
 app.use(middleware.requestLogger)
 app.use(middleware.tokenExtractor)
 
+app.use(cors())
 app.use('/api/me', meRouter)
 app.use('/api/apartments', apartmentsRouter)
 app.use('/api/auth', authRouter)
