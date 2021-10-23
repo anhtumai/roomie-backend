@@ -7,10 +7,12 @@ import processClientError from '../util/error'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 
+import pusher from '../pusherConfig'
+
 async function findMany(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   try {
     const sentInvitations = await invitationModel.findMany({
@@ -31,7 +33,7 @@ async function findMany(
 async function create(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const inviteeUsername = req.body.username
 
@@ -65,9 +67,15 @@ async function create(
     const newInvitation = await invitationModel.create(
       req.account.id,
       invitee.id,
-      req.account.apartment.id,
+      req.account.apartment.id
     )
     res.status(201).json(newInvitation)
+    pusher.trigger(`notification-channel-${invitee.id}`, 'invitation', {
+      state: 'CREATED',
+      invitor: req.account.username,
+      invitee: invitee.username,
+      apartment: req.account.apartment.name,
+    })
   } catch (err) {
     if (err.code === 'P2002') {
       const errorMessage = 'Conflict error: You had sent an invitation to this person'
@@ -80,7 +88,7 @@ async function create(
 async function reject(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const invitationId = Number(req.params.id)
 
@@ -98,6 +106,12 @@ async function reject(
         `Reject invitation to ${invitation.apartment.name} ` +
         `from ${invitation.invitor.username}`,
     })
+    pusher.trigger(`notification-channel-${invitation.invitor.id}`, 'invitation', {
+      state: 'REJECTED',
+      invitor: invitation.invitor.username,
+      invitee: req.account.username,
+      apartment: invitation.apartment.name,
+    })
   } catch (err) {
     next(err)
   }
@@ -106,7 +120,7 @@ async function reject(
 async function accept(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const invitationId = Number(req.params.id)
 
@@ -129,6 +143,12 @@ async function accept(
         `Accept invitation to ${invitation.apartment.name} ` +
         `from ${invitation.invitor.username}`,
     })
+    pusher.trigger(`notification-channel-${invitation.invitor.id}`, 'invitation', {
+      state: 'ACCEPTED',
+      invitor: invitation.invitor.username,
+      invitee: req.account.username,
+      apartment: invitation.apartment.name,
+    })
   } catch (err) {
     next(err)
   }
@@ -137,7 +157,7 @@ async function accept(
 async function deleteOne(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const invitationId = Number(req.params.id)
 
@@ -153,6 +173,12 @@ async function deleteOne(
     await invitationModel.deleteMany({ id: invitationId })
 
     res.status(204).json()
+    pusher.trigger(`notification-channel-${invitation.invitee.id}`, 'invitation', {
+      state: 'CANCELED',
+      invitor: req.account.username,
+      invitee: invitation.invitee.username,
+      apartment: req.account.apartment.name,
+    })
   } catch (err) {
     next(err)
   }
