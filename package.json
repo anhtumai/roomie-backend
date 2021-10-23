@@ -20,12 +20,15 @@
     "bcrypt": "^5.0.1",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "1.19.0",
+    "cors": "^2.8.5",
     "dotenv": "8.2.0",
+    "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
+    "jwt-decode": "^3.1.2",
     "lodash": "^4.17.21",
+    "pusher": "^5.0.0",
     "validator": "^13.6.0",
-    "winston": "^3.3.3",
-    "express": "^4.17.1"
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@babel/core": "^7.15.5",
@@ -34,6 +37,7 @@
     "@types/bcrypt": "^5.0.0",
     "@types/bcrypt-nodejs": "0.0.31",
     "@types/body-parser": "1.19.0",
+    "@types/cors": "^2.8.12",
     "@types/eslint": "7.2.6",
     "@types/express": "^4.17.11",
     "@types/jest": "^26.0.24",
