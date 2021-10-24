@@ -16,7 +16,7 @@ export type JoinApartmentAccount = Profile & {
 }
 
 async function findJoinApartmentAccount(
-  whereParams: Prisma.AccountWhereInput,
+  whereParams: Prisma.AccountWhereInput
 ): Promise<JoinApartmentAccount | null> {
   const account = await prisma.account.findFirst({
     where: whereParams,
@@ -72,7 +72,7 @@ async function create(username: string, name: string, passwordHash: string): Pro
 
 async function update(
   whereParams: Prisma.AccountWhereUniqueInput,
-  dataParams: Prisma.AccountUncheckedUpdateInput,
+  dataParams: Prisma.AccountUncheckedUpdateInput
 ): Promise<void> {
   await prisma.account.update({
     where: whereParams,
@@ -82,7 +82,7 @@ async function update(
 
 async function updateMany(
   whereParams: Prisma.AccountWhereInput,
-  dataParams: Prisma.AccountUncheckedUpdateInput,
+  dataParams: Prisma.AccountUncheckedUpdateInput
 ): Promise<void> {
   await prisma.account.updateMany({
     where: whereParams,
@@ -106,6 +106,10 @@ async function deleteAll(): Promise<void> {
   await prisma.account.deleteMany({})
 }
 
+async function deleteApartmentId(whereParams: Prisma.AccountWhereUniqueInput): Promise<void> {
+  await update(whereParams, { apartment_id: null })
+}
+
 export default {
   find,
   findJoinApartmentAccount,
@@ -116,4 +120,5 @@ export default {
   deleteOne,
   deleteMany,
   deleteAll,
+  deleteApartmentId,
 }

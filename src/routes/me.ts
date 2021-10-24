@@ -13,6 +13,8 @@ meRouter.get('/', middleware.accountExtractor, accountController.findJoinApartme
 
 meRouter.get('/apartment', middleware.accountExtractor, apartmentController.findJoinTasksApartment)
 
+meRouter.delete('/apartment', middleware.accountExtractor, apartmentController.leave)
+
 meRouter.get('/tasks', middleware.accountExtractor, taskController.findResponseTasks)
 
 meRouter.get('/invitations', middleware.accountExtractor, invitationController.findMany)

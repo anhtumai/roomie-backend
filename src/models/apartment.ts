@@ -58,14 +58,13 @@ async function create(name: string, adminId: number): Promise<Apartment> {
   return newApartment
 }
 
-async function update(apartmentId: number, name: string): Promise<Apartment> {
+async function update(
+  whereParams: Prisma.ApartmentWhereUniqueInput,
+  dataParams: Prisma.ApartmentUncheckedUpdateInput
+): Promise<Apartment> {
   const updatedApartment = await prisma.apartment.update({
-    where: {
-      id: apartmentId,
-    },
-    data: {
-      name,
-    },
+    where: whereParams,
+    data: dataParams,
   })
   return updatedApartment
 }
