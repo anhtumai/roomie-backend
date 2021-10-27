@@ -10,7 +10,7 @@ import taskModel from '../models/task'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
-import pusher from '../pusherConfig'
+import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
 
 function validateApartmentProperty(apartmentProperty: any): boolean {
   const { name } = apartmentProperty
@@ -157,12 +157,14 @@ async function leave(req: RequestAfterExtractor, res: Response, next: NextFuncti
         await apartmentModel.deleteOne({ id: apartment.id })
       } else {
         await apartmentModel.update({ id: apartment.id }, { admin_id: apartment.members[0].id })
-        for (const member of apartment.members) {
-          await pusher.trigger(`notification-channel-${member.id}`, 'apartment', {
-            state: 'LEAVE',
+        pusher.trigger(
+          apartment.members.map((member) => makeChannel(member.id)),
+          'apartment',
+          {
+            state: pusherConstant.LEAVE_STATE,
             leaver: req.account.username,
-          })
-        }
+          }
+        )
         // Future work: rearrange task order and task assignment when a person leaves
       }
     }

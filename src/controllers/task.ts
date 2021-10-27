@@ -188,14 +188,8 @@ async function create(
       pusherConstant.TASK_EVENT,
       {
         state: pusherConstant.CREATED_STATE,
-        task: {
-          name: taskProperty.name,
-        },
-        creator: {
-          id: req.account.id,
-          name: req.account.name,
-          username: req.account.username,
-        },
+        task: taskProperty.name,
+        creator: req.account.username,
       }
     )
   } catch (err) {
