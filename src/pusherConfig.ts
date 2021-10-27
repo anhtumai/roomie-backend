@@ -26,7 +26,7 @@ export const pusherConstant = {
   CANCELED_STATE: 'CANCELED',
   REJECTED_STATE: 'REJECTED',
   ACCEPTED_STATE: 'ACCEPTED',
-  LEAVE_STATE: 'LEAVE',
+  LEAVE_STATE: 'LEFT',
 }
 
 export default pusher

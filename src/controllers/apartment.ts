@@ -152,22 +152,23 @@ async function leave(req: RequestAfterExtractor, res: Response, next: NextFuncti
     const apartment = await apartmentModel.findJoinAdminNMembersApartment({
       id: req.account.apartment.id,
     })
-    if (apartment.admin.id === req.account.id) {
-      if (apartment.members.length === 0) {
-        await apartmentModel.deleteOne({ id: apartment.id })
-      } else {
-        await apartmentModel.update({ id: apartment.id }, { admin_id: apartment.members[0].id })
-        pusher.trigger(
-          apartment.members.map((member) => makeChannel(member.id)),
-          pusherConstant.APARTMENT_EVENT,
-          {
-            state: pusherConstant.LEAVE_STATE,
-            leaver: req.account.username,
-          }
-        )
-        // Future work: rearrange task order and task assignment when a person leaves
-      }
+    if (apartment.members.length === 0) {
+      await apartmentModel.deleteOne({ id: apartment.id })
+      return
     }
+    if (apartment.admin.id === req.account.id) {
+      await apartmentModel.update({ id: apartment.id }, { admin_id: apartment.members[0].id })
+    }
+    pusher.trigger(
+      apartment.members.map((member) => makeChannel(member.id)),
+      pusherConstant.APARTMENT_EVENT,
+      {
+        state: pusherConstant.LEAVE_STATE,
+        leaver: req.account.username,
+        admin: apartment.members[0].username,
+      }
+    )
+    // Future work: rearrange task order and task assignment when a person leaves
   } catch (err) {
     console.log(err)
   }
