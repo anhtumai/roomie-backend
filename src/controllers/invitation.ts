@@ -136,6 +136,11 @@ async function accept(
     const whereParams = { id: req.account.id }
     const dataParams = { apartment_id: invitation.apartment.id }
     await accountModel.update(whereParams, dataParams)
+
+    const toRejectInvitations = (
+      await invitationModel.findMany({ invitor_id: req.account.id })
+    ).filter((i) => i.id !== invitation.id)
+
     await invitationModel.deleteMany({ invitee_id: req.account.id })
 
     res.status(200).json({
@@ -143,12 +148,20 @@ async function accept(
         `Accept invitation to ${invitation.apartment.name} ` +
         `from ${invitation.invitor.username}`,
     })
-    await pusher.trigger(makeChannel(invitation.invitor.id), pusherConstant.INVITATION_EVENT, {
+    pusher.trigger(makeChannel(invitation.invitor.id), pusherConstant.INVITATION_EVENT, {
       state: pusherConstant.ACCEPTED_STATE,
       invitor: invitation.invitor.username,
       invitee: req.account.username,
       apartment: invitation.apartment.name,
     })
+    toRejectInvitations.forEach((i) =>
+      pusher.trigger(makeChannel(i.invitor.id), pusherConstant.INVITATION_EVENT, {
+        state: pusherConstant.REJECTED_STATE,
+        invitor: i.invitor.username,
+        invitee: req.account.username,
+        apartment: i.apartment.name,
+      })
+    )
   } catch (err) {
     next(err)
   }
