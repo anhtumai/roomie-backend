@@ -184,7 +184,9 @@ async function create(
 
     const notifiedUsers = assigners.filter((assigner) => assigner.id !== req.account.id)
     pusher.trigger(
-      notifiedUsers.map((user) => makeChannel(user.id)),
+      notifiedUsers
+        .filter((user) => user.id !== req.account.id)
+        .map((user) => makeChannel(user.id)),
       pusherConstant.TASK_EVENT,
       {
         state: pusherConstant.CREATED_STATE,
