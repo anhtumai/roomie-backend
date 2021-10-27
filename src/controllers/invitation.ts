@@ -7,7 +7,7 @@ import processClientError from '../util/error'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 
-import pusher from '../pusherConfig'
+import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
 
 async function findMany(
   req: RequestAfterExtractor,
@@ -70,8 +70,8 @@ async function create(
       req.account.apartment.id
     )
     res.status(201).json(newInvitation)
-    await pusher.trigger(`notification-channel-${invitee.id}`, 'invitation', {
-      state: 'CREATED',
+    await pusher.trigger(makeChannel(invitee.id), pusherConstant.INVITATION_EVENT, {
+      state: pusherConstant.CREATED_STATE,
       invitor: req.account.username,
       invitee: invitee.username,
       apartment: req.account.apartment.name,
@@ -106,8 +106,8 @@ async function reject(
         `Reject invitation to ${invitation.apartment.name} ` +
         `from ${invitation.invitor.username}`,
     })
-    await pusher.trigger(`notification-channel-${invitation.invitor.id}`, 'invitation', {
-      state: 'REJECTED',
+    await pusher.trigger(makeChannel(invitation.invitor.id), pusherConstant.INVITATION_EVENT, {
+      state: pusherConstant.REJECTED_STATE,
       invitor: invitation.invitor.username,
       invitee: req.account.username,
       apartment: invitation.apartment.name,
@@ -143,8 +143,8 @@ async function accept(
         `Accept invitation to ${invitation.apartment.name} ` +
         `from ${invitation.invitor.username}`,
     })
-    await pusher.trigger(`notification-channel-${invitation.invitor.id}`, 'invitation', {
-      state: 'ACCEPTED',
+    await pusher.trigger(makeChannel(invitation.invitor.id), pusherConstant.INVITATION_EVENT, {
+      state: pusherConstant.ACCEPTED_STATE,
       invitor: invitation.invitor.username,
       invitee: req.account.username,
       apartment: invitation.apartment.name,
@@ -173,8 +173,8 @@ async function deleteOne(
     await invitationModel.deleteMany({ id: invitationId })
 
     res.status(204).json()
-    await pusher.trigger(`notification-channel-${invitation.invitee.id}`, 'invitation', {
-      state: 'CANCELED',
+    await pusher.trigger(makeChannel(invitation.invitee.id), 'invitation', {
+      state: pusherConstant.CANCELED_STATE,
       invitor: req.account.username,
       invitee: invitation.invitee.username,
       apartment: req.account.apartment.name,

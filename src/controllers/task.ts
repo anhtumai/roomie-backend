@@ -187,7 +187,7 @@ async function create(
       notifiedUsers.map((user) => makeChannel(user.id)),
       pusherConstant.TASK_EVENT,
       {
-        state: pusherConstant.CREATE_STATE,
+        state: pusherConstant.CREATED_STATE,
         task: {
           name: taskProperty.name,
         },

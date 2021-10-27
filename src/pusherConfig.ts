@@ -19,10 +19,13 @@ export function makeChannel(userId: number): string {
 
 export const pusherConstant = {
   APARTMENT_EVENT: 'apartment',
-  INVITATION_EVENT: 'event',
+  INVITATION_EVENT: 'invitation',
   TASK_EVENT: 'task',
 
-  CREATE_STATE: 'CREATE',
+  CREATED_STATE: 'CREATED',
+  CANCELED_STATE: 'CANCELED',
+  REJECTED_STATE: 'REJECTED',
+  ACCEPTED_STATE: 'ACCEPTED',
 }
 
 export default pusher
