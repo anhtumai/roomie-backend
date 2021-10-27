@@ -7,6 +7,7 @@ import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import apartmentModel from '../models/apartment'
 import { Profile } from '../models/account'
+import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
@@ -89,7 +90,9 @@ export function orderValidator(
   next()
 }
 
-function parseTaskProperty(taskProperty: any): Omit<Prisma.TaskUncheckedCreateInput, 'creator_id'> {
+function parseTaskProperty(
+  taskProperty: any
+): Omit<Prisma.TaskCreateInput, 'creator' | 'task_requests' | 'task_assignments'> {
   const { name, description, frequency, difficulty, start, end } = taskProperty
 
   return {
@@ -178,6 +181,23 @@ async function create(
     await createTaskRequests(assigners, createdTask.id)
 
     res.status(201).json(createdTask)
+
+    const notifiedUsers = assigners.filter((assigner) => assigner.id !== req.account.id)
+    pusher.trigger(
+      notifiedUsers.map((user) => makeChannel(user.id)),
+      pusherConstant.TASK_EVENT,
+      {
+        state: pusherConstant.CREATE_STATE,
+        task: {
+          name: taskProperty.name,
+        },
+        creator: {
+          id: req.account.id,
+          name: req.account.name,
+          username: req.account.username,
+        },
+      }
+    )
   } catch (err) {
     next(err)
   }
