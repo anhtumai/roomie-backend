@@ -159,7 +159,7 @@ async function leave(req: RequestAfterExtractor, res: Response, next: NextFuncti
         await apartmentModel.update({ id: apartment.id }, { admin_id: apartment.members[0].id })
         pusher.trigger(
           apartment.members.map((member) => makeChannel(member.id)),
-          'apartment',
+          pusherConstant.APARTMENT_EVENT,
           {
             state: pusherConstant.LEAVE_STATE,
             leaver: req.account.username,
