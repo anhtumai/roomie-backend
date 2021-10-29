@@ -18,7 +18,7 @@ async function createTaskAssignments(taskId: number, apartmentId: number): Promi
     const taskRequests = await taskRequestModel.findMany({ task_id: taskId })
     const requestStates = taskRequests.map((taskRequest) => taskRequest.state)
 
-    if (!requestStates.every((state) => state === 'accepted')) {
+    if (requestStates.length === 0 || !requestStates.every((state) => state === 'accepted')) {
       return
     }
 
@@ -86,11 +86,7 @@ async function updateState(
     next(err)
   }
 
-  try {
-    await createTaskAssignments(taskId, Number(req.account.apartment?.id))
-  } catch (err) {
-    logger.error(err)
-  }
+  await createTaskAssignments(taskId, Number(req.account.apartment?.id))
 }
 
 export default {
