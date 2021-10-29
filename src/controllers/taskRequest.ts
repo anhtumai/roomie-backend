@@ -1,14 +1,19 @@
 import { Response, NextFunction } from 'express'
 
+import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
+
 import _ from 'lodash'
 
 import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
+import taskModel from '../models/task'
+import accountModel from '../models/account'
+
 import processClientError from '../util/error'
 import logger from '../util/logger'
 import { RequestAfterExtractor } from '../types/express-middleware'
 
-async function createTaskAssignments(taskId: number): Promise<void> {
+async function createTaskAssignments(taskId: number, apartmentId: number): Promise<void> {
   try {
     const taskRequests = await taskRequestModel.findMany({ task_id: taskId })
     const requestStates = taskRequests.map((taskRequest) => taskRequest.state)
@@ -16,10 +21,6 @@ async function createTaskAssignments(taskId: number): Promise<void> {
     if (!requestStates.every((state) => state === 'accepted')) {
       return
     }
-
-    // Need to notify to the client side
-    //
-    console.log('Notify: All requests for task: taskId has been accepted')
 
     const assignmentCreateData = _.sortBy(taskRequests, ['assigner_id']).map((request, i) => ({
       task_id: taskId,
@@ -30,7 +31,21 @@ async function createTaskAssignments(taskId: number): Promise<void> {
     await taskAssignmentModel.createMany(assignmentCreateData)
     await taskRequestModel.deleteMany({ task_id: taskId })
 
-    console.log('Notify: Task Assignment is created')
+    const task = await taskModel.find({ id: taskId })
+    const allMembers = await accountModel.findMany({ apartment_id: apartmentId })
+
+    pusher.trigger(
+      allMembers.map(({ id }) => makeChannel(id)),
+      pusherConstant.TASK_EVENT,
+      {
+        state: pusherConstant.ASSIGNED_STATE,
+        task: task?.name,
+        assigners: assignmentCreateData.map(({ assigner_id }) => {
+          const assigner = allMembers.find((member) => member.id === assigner_id)
+          return assigner?.username
+        }),
+      }
+    )
   } catch (err) {
     logger.error(err)
   }
@@ -40,7 +55,7 @@ async function createTaskAssignments(taskId: number): Promise<void> {
 async function updateState(
   req: RequestAfterExtractor,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> {
   const taskRequestId = Number(req.params.id)
   const newState = req.body.state
@@ -61,10 +76,10 @@ async function updateState(
     }
     const updatedTaskRequest = await taskRequestModel.update(
       { id: taskRequestId },
-      { state: newState },
+      { state: newState }
     )
     res.status(200).json({ msg: `Task request id ${taskRequestId} is now ${newState}` })
-    await createTaskAssignments(updatedTaskRequest.task_id)
+    await createTaskAssignments(updatedTaskRequest.task_id, Number(req.account.apartment?.id))
   } catch (err) {
     next(err)
   }

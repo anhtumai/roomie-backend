@@ -54,6 +54,13 @@ async function find(whereParams: Prisma.AccountWhereInput): Promise<Account | nu
   return account
 }
 
+async function findMany(whereParams: Prisma.AccountWhereInput): Promise<Account[]> {
+  const account = await prisma.account.findMany({
+    where: whereParams,
+  })
+  return account
+}
+
 async function create(username: string, name: string, passwordHash: string): Promise<Profile> {
   const newAccount = await prisma.account.create({
     data: {
@@ -112,6 +119,7 @@ async function deleteApartmentId(whereParams: Prisma.AccountWhereUniqueInput): P
 
 export default {
   find,
+  findMany,
   findJoinApartmentAccount,
   findProfile,
   create,
