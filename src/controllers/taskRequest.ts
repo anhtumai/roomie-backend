@@ -60,6 +60,8 @@ async function updateState(
   const taskRequestId = Number(req.params.id)
   const newState = req.body.state
 
+  let taskId = 0
+
   const validRequestStates = ['pending', 'accepted', 'rejected']
   if (!validRequestStates.includes(newState)) {
     const errorMessage = 'Invalid body: Updated state must be either accepted or rejected'
@@ -79,9 +81,15 @@ async function updateState(
       { state: newState }
     )
     res.status(200).json({ msg: `Task request id ${taskRequestId} is now ${newState}` })
-    await createTaskAssignments(updatedTaskRequest.task_id, Number(req.account.apartment?.id))
+    taskId = updatedTaskRequest.task_id
   } catch (err) {
     next(err)
+  }
+
+  try {
+    await createTaskAssignments(taskId, Number(req.account.apartment?.id))
+  } catch (err) {
+    logger.error(err)
   }
 }
 
