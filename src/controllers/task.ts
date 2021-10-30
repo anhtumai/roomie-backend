@@ -12,8 +12,7 @@ import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 
-import { Prisma } from '@prisma/client'
-import taskRequest from '../models/taskRequest'
+import { Prisma, TaskRequest } from '@prisma/client'
 
 function validateTaskProperty(taskProperty: any): boolean {
   const { name, description, frequency, difficulty, start, end } = taskProperty
@@ -226,12 +225,7 @@ async function deleteOne(
 ): Promise<void> {
   const taskId = Number(req.params.id)
 
-  try {
-    const taskRequests = await taskRequestModel.findMany({ task_id: taskId })
-
-    const deletedTask = await taskModel.deleteOne({ id: taskId })
-    res.status(204).json()
-
+  async function notifyAfterDeleting(taskRequests: TaskRequest[], deletedTaskName: string) {
     try {
       let notifiedChannels: string[] = []
       if (taskRequests.length > 0) {
@@ -244,12 +238,20 @@ async function deleteOne(
       }
       await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
         state: pusherConstant.DELETED_STATE,
-        task: deletedTask.name,
+        task: deletedTaskName,
         deleter: req.account.username,
       })
     } catch (error) {
       console.log(error)
     }
+  }
+
+  try {
+    const taskRequests = await taskRequestModel.findMany({ task_id: taskId })
+
+    const deletedTask = await taskModel.deleteOne({ id: taskId })
+    res.status(204).json()
+    await notifyAfterDeleting(taskRequests, deletedTask.name)
   } catch (err) {
     next(err)
   }
