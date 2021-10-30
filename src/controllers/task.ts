@@ -6,13 +6,14 @@ import taskModel from '../models/task'
 import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import apartmentModel from '../models/apartment'
-import { Profile } from '../models/account'
+import accountModel, { Profile } from '../models/account'
 import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 
 import { Prisma } from '@prisma/client'
+import taskRequest from '../models/taskRequest'
 
 function validateTaskProperty(taskProperty: any): boolean {
   const { name, description, frequency, difficulty, start, end } = taskProperty
@@ -226,8 +227,29 @@ async function deleteOne(
   const taskId = Number(req.params.id)
 
   try {
-    await taskModel.deleteOne({ id: taskId })
+    const taskRequests = await taskRequestModel.findMany({ task_id: taskId })
+
+    const deletedTask = await taskModel.deleteOne({ id: taskId })
     res.status(204).json()
+
+    try {
+      let notifiedChannels: string[] = []
+      if (taskRequests.length > 0) {
+        notifiedChannels = taskRequests.map((taskRequest) => makeChannel(taskRequest.assigner_id))
+      } else {
+        const allMembers = await accountModel.findMany({
+          apartment_id: Number(req.account.apartment?.id),
+        })
+        notifiedChannels = allMembers.map((member) => makeChannel(member.id))
+      }
+      await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
+        state: pusherConstant.DELETED_STATE,
+        task: deletedTask.name,
+        deleter: req.account.username,
+      })
+    } catch (error) {
+      console.log(error)
+    }
   } catch (err) {
     next(err)
   }
