@@ -71,28 +71,28 @@ model TaskRequest {
 	@@map(name: "taskrequest")
 	id			Int		@id	@default(autoincrement())
 
-	assigner	Account	@relation("RequestTo", fields: [assigner_id], references: [id])
-	assigner_id	Int
+	assignee	Account	@relation("RequestTo", fields: [assignee_id], references: [id])
+	assignee_id	Int
 	
 	task		Task	@relation("TaskRequest", fields: [task_id], references: [id], onDelete: Cascade)
 	task_id		Int
 	
 	state		RequestType	@default(pending)
-	@@unique(fields: [assigner_id, task_id])
+	@@unique(fields: [assignee_id, task_id])
 }
 
 model TaskAssignment {
 	@@map(name: "taskassignment")
 	id				Int		@id	@default(autoincrement())
 	
-	assigner		Account	@relation("AssignTo", fields: [assigner_id], references: [id])
-	assigner_id		Int
+	assignee		Account	@relation("AssignTo", fields: [assignee_id], references: [id])
+	assignee_id		Int
 
 	task			Task	@relation("TaskAssignment", fields: [task_id], references: [id], onDelete: Cascade)
 	task_id			Int
 	
 	order			Int
-	@@unique(fields: [assigner_id, task_id])
+	@@unique(fields: [assignee_id, task_id])
 }
 
 enum RequestType {

@@ -12,7 +12,7 @@ type JoinTaskAssignment = {
 type JoinAssignerAssignment = {
   id: number
   order: number
-  assigner: Profile
+  assignee: Profile
 }
 
 type JoinTaskNAssignerAssignment = JoinAssignerAssignment & {
@@ -41,7 +41,7 @@ function toResponseTaskAssignments(
       {
         id: queryAssignment.id,
         order: queryAssignment.order,
-        assigner: queryAssignment.assigner,
+        assignee: queryAssignment.assignee,
       },
     ]
     assignmentsMap.set(taskId, updatedAssignments)
@@ -86,7 +86,7 @@ async function findJoinTaskNAssignerAssignments(
     select: {
       id: true,
       order: true,
-      assigner: {
+      assignee: {
         select: {
           id: true,
           name: true,
@@ -111,11 +111,11 @@ async function findJoinTaskNAssignerAssignments(
 }
 
 async function findResponseTaskAssignments(memberIds: number[]): Promise<ResponseTaskAssignment[]> {
-  const assignerIdsParams = memberIds.map((id) => ({
-    assigner_id: id,
+  const assigneeIdsParams = memberIds.map((id) => ({
+    assignee_id: id,
   }))
   const taskAssignments = await findJoinTaskNAssignerAssignments({
-    OR: assignerIdsParams,
+    OR: assigneeIdsParams,
   })
   return toResponseTaskAssignments(taskAssignments)
 }

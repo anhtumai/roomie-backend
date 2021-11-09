@@ -22,9 +22,9 @@ async function createTaskAssignments(taskId: number, apartmentId: number): Promi
       return
     }
 
-    const assignmentCreateData = _.sortBy(taskRequests, ['assigner_id']).map((request, i) => ({
+    const assignmentCreateData = _.sortBy(taskRequests, ['assignee_id']).map((request, i) => ({
       task_id: taskId,
-      assigner_id: request.assigner_id,
+      assignee_id: request.assignee_id,
       order: i,
     }))
 
@@ -40,9 +40,9 @@ async function createTaskAssignments(taskId: number, apartmentId: number): Promi
       {
         state: pusherConstant.ASSIGNED_STATE,
         task: task?.name,
-        assigners: assignmentCreateData.map(({ assigner_id }) => {
-          const assigner = allMembers.find((member) => member.id === assigner_id)
-          return assigner?.username
+        assignees: assignmentCreateData.map(({ assignee_id }) => {
+          const assignee = allMembers.find((member) => member.id === assignee_id)
+          return assignee?.username
         }),
       }
     )
@@ -72,7 +72,7 @@ async function updateState(
     const taskRequest = await taskRequestModel.findJoinAssignerRequest({
       id: taskRequestId,
     })
-    if (!taskRequest || taskRequest.assigner.id !== req.account.id) {
+    if (!taskRequest || taskRequest.assignee.id !== req.account.id) {
       const errorMessage = 'Forbidden error'
       return processClientError(res, 403, errorMessage)
     }

@@ -6,7 +6,7 @@ import { prisma } from './client'
 type JoinAssignerRequest = {
   id: number
   state: RequestType
-  assigner: Profile
+  assignee: Profile
 }
 export type JoinTaskNAssignerRequest = JoinAssignerRequest & {
   task: Task
@@ -38,7 +38,7 @@ function toResponseTaskRequests(inputs: JoinTaskNAssignerRequest[]): ResponseTas
       {
         id: queryRequest.id,
         state: queryRequest.state,
-        assigner: queryRequest.assigner,
+        assignee: queryRequest.assignee,
       },
     ]
     requestsMap.set(taskId, updatedRequests)
@@ -66,7 +66,7 @@ async function findJoinAssignerRequest(
     select: {
       id: true,
       state: true,
-      assigner: {
+      assignee: {
         select: {
           id: true,
           name: true,
@@ -110,7 +110,7 @@ async function findJoinTaskNAssignerRequests(
     where: whereParams,
     select: {
       id: true,
-      assigner: {
+      assignee: {
         select: {
           id: true,
           name: true,
@@ -139,11 +139,11 @@ async function findJoinTaskNAssignerRequests(
 }
 
 async function findResponseTaskRequests(memberIds: number[]): Promise<ResponseTaskRequest[]> {
-  const assignerIdsParams = memberIds.map((id) => ({
-    assigner_id: id,
+  const assigneeIdsParams = memberIds.map((id) => ({
+    assignee_id: id,
   }))
   const taskRequests = await findJoinTaskNAssignerRequests({
-    OR: assignerIdsParams,
+    OR: assigneeIdsParams,
   })
   return toResponseTaskRequests(taskRequests)
 }

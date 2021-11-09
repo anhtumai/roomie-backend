@@ -31,7 +31,7 @@ const taskRequest1 = {
   difficulty: 6,
   start: '01 Sep 2021',
   end: '01 Sep 2022',
-  assigners: ['anhtumai', 'firsttestuser', 'secondtestuser'],
+  assignees: ['anhtumai', 'firsttestuser', 'secondtestuser'],
 }
 
 beforeAll(async () => {
@@ -66,7 +66,7 @@ describe('POST /api/tasks', () => {
     await api
       .post('/api/tasks')
       .set('Authorization', 'Bearer ' + testuser1Token)
-      .send({ ...taskRequest1, assigners: ['nonexisting1', 'nonexisting2'] })
+      .send({ ...taskRequest1, assignees: ['nonexisting1', 'nonexisting2'] })
       .expect(400)
   })
   test('create valid task', async () => {
@@ -126,13 +126,13 @@ describe('PATCH /api/taskrequests/:id', () => {
       .expect(200)
     const requests = response.body.task_requests[0].requests
     user1RequestId = Number(
-      requests.find((request) => request.assigner.username === user1.username).id,
+      requests.find((request) => request.assignee.username === user1.username).id,
     )
     testuser1RequestId = Number(
-      requests.find((request) => request.assigner.username === testuser1.username).id,
+      requests.find((request) => request.assignee.username === testuser1.username).id,
     )
     testuser2RequestId = Number(
-      requests.find((request) => request.assigner.username === testuser2.username).id,
+      requests.find((request) => request.assignee.username === testuser2.username).id,
     )
   })
   test('accept a request not belong to user should return 400', async () => {
@@ -198,10 +198,10 @@ describe('PUT /api/tasks/:id/order', () => {
 
     const joinTaskAssignments = responseTaskAssignment.assignments
     joinTaskAssignments.sort((asn1, asn2) => asn1.order - asn2.order)
-    const selectedOrder = joinTaskAssignments.map((assignment) => assignment.assigner.username)
+    const selectedOrder = joinTaskAssignments.map((assignment) => assignment.assignee.username)
     expect(selectedOrder).toEqual(newOrder)
   })
-  test('change order without all assigners usernames will return 400', async () => {
+  test('change order without all assignees usernames will return 400', async () => {
     await api
       .put(`/api/tasks/${taskId}/order`)
       .set('Authorization', 'Bearer ' + testuser1Token)

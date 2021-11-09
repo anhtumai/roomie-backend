@@ -4,7 +4,7 @@ import _ from 'lodash'
 
 import taskController, {
   taskPropertyValidator,
-  assignersValidator,
+  assigneesValidator,
   orderValidator,
   creatorNAdminPermissionValidator,
   membersPermissionValidator,
@@ -18,7 +18,7 @@ tasksRouter.post(
   '/',
   taskPropertyValidator,
   middleware.accountExtractor,
-  assignersValidator,
+  assigneesValidator,
   taskController.create
 )
 
@@ -57,11 +57,11 @@ tasksRouter.put(
 )
 
 tasksRouter.put(
-  '/:id/assigners',
+  '/:id/assignees',
   middleware.paramsIdValidator,
   middleware.accountExtractor,
   creatorNAdminPermissionValidator,
-  assignersValidator,
+  assigneesValidator,
   taskController.updateAssigners
 )
 

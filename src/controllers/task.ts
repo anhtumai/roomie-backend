@@ -39,20 +39,20 @@ function validateStringArray(arr: any): boolean {
   return true
 }
 
-export async function assignersValidator(
+export async function assigneesValidator(
   req: RequestAfterExtractor,
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const assignerUsernames: string[] = req.body.assigners
+  const assigneeUsernames: string[] = req.body.assignees
 
   if (!req.account.apartment) {
     const errorMessage = 'ConditionNotMeet error: you must be a member of an apartment'
     return processClientError(res, 400, errorMessage)
   }
 
-  if (!validateStringArray(assignerUsernames)) {
-    const errorMessage = 'Invalid body: "assigners" must be string array'
+  if (!validateStringArray(assigneeUsernames)) {
+    const errorMessage = 'Invalid body: "assignees" must be string array'
     return processClientError(res, 400, errorMessage)
   }
 
@@ -63,7 +63,7 @@ export async function assignersValidator(
     const members = apartment.members
     const memberUsernames = members.map((member) => member.username)
 
-    const incompliantUsernames = assignerUsernames.filter(
+    const incompliantUsernames = assigneeUsernames.filter(
       (username) => !memberUsernames.includes(username)
     )
     if (incompliantUsernames.length > 0) {
@@ -155,9 +155,9 @@ export async function membersPermissionValidator(
   }
 }
 
-async function createTaskRequests(assigners: Profile[], taskId: number): Promise<void> {
-  const taskRequestCreateData = assigners.map((profile) => ({
-    assigner_id: profile.id,
+async function createTaskRequests(assignees: Profile[], taskId: number): Promise<void> {
+  const taskRequestCreateData = assignees.map((profile) => ({
+    assignee_id: profile.id,
     task_id: taskId,
   }))
   await taskRequestModel.createMany(taskRequestCreateData)
@@ -169,7 +169,7 @@ async function create(
   next: NextFunction
 ): Promise<void> {
   const taskProperty = parseTaskProperty(req.body)
-  const assignerUsernames: string[] = req.body.assigners
+  const assigneeUsernames: string[] = req.body.assignees
   const members: Profile[] = res.locals.members
 
   try {
@@ -177,12 +177,12 @@ async function create(
       ...taskProperty,
       creator_id: req.account.id,
     })
-    const assigners = members.filter((member) => assignerUsernames.includes(member.username))
-    await createTaskRequests(assigners, createdTask.id)
+    const assignees = members.filter((member) => assigneeUsernames.includes(member.username))
+    await createTaskRequests(assignees, createdTask.id)
 
     res.status(201).json(createdTask)
 
-    const notifiedUsers = assigners.filter((assigner) => assigner.id !== req.account.id)
+    const notifiedUsers = assignees.filter((assignee) => assignee.id !== req.account.id)
     pusher.trigger(
       notifiedUsers.map((user) => makeChannel(user.id)),
       pusherConstant.TASK_EVENT,
@@ -229,7 +229,7 @@ async function deleteOne(
     try {
       let notifiedChannels: string[] = []
       if (taskRequests.length > 0) {
-        notifiedChannels = taskRequests.map((taskRequest) => makeChannel(taskRequest.assigner_id))
+        notifiedChannels = taskRequests.map((taskRequest) => makeChannel(taskRequest.assignee_id))
       } else {
         const allMembers = await accountModel.findMany({
           apartment_id: Number(req.account.apartment?.id),
@@ -293,11 +293,11 @@ async function findResponseTasks(
   const accountId = req.account.id
   try {
     const taskRequests = await taskRequestModel.findJoinTaskRequests({
-      assigner_id: accountId,
+      assignee_id: accountId,
     })
 
     const taskAssignments = await taskAssignmentModel.findJoinTaskAssignments({
-      assigner_id: accountId,
+      assignee_id: accountId,
     })
     res.status(200).json({
       requests: taskRequests,
@@ -323,16 +323,16 @@ async function updateOrder(
       const errorMessage = 'ConditionNotMeet error: Task hasn\'t been assigned to anyones'
       return processClientError(res, 400, errorMessage)
     }
-    const assignerUsernames = responseTaskAssignment.assignments.map(
-      (assignment) => assignment.assigner.username
+    const assigneeUsernames = responseTaskAssignment.assignments.map(
+      (assignment) => assignment.assignee.username
     )
-    if (!_.isEqual(_.sortBy(usernamesOrder), _.sortBy(assignerUsernames))) {
+    if (!_.isEqual(_.sortBy(usernamesOrder), _.sortBy(assigneeUsernames))) {
       const errorMessage = 'Invalid body: Order must contain all member usernames'
       return processClientError(res, 400, errorMessage)
     }
     for (const [i, username] of usernamesOrder.entries()) {
       const assignmentId = responseTaskAssignment.assignments.find(
-        (assignment) => assignment.assigner.username === username
+        (assignment) => assignment.assignee.username === username
       ).id
       await taskAssignmentModel.update({ id: assignmentId }, { order: i })
     }
@@ -347,7 +347,7 @@ async function updateAssigners(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const assignerUsernames: string[] = req.body.assigners
+  const assigneeUsernames: string[] = req.body.assignees
   const taskId = Number(req.params.id)
   const members: Profile[] = res.locals.members
 
@@ -355,9 +355,9 @@ async function updateAssigners(
     await taskRequestModel.deleteMany({ task_id: taskId })
     await taskAssignmentModel.deleteMany({ task_id: taskId })
 
-    const assigners = members.filter((member) => assignerUsernames.includes(member.username))
-    await createTaskRequests(assigners, taskId)
-    res.status(200).json({ assigners: assignerUsernames })
+    const assignees = members.filter((member) => assigneeUsernames.includes(member.username))
+    await createTaskRequests(assignees, taskId)
+    res.status(200).json({ assignees: assigneeUsernames })
   } catch (err) {
     next(err)
   }
