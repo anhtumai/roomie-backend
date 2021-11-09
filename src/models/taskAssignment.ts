@@ -9,26 +9,26 @@ type JoinTaskAssignment = {
   task: Task
 }
 
-type JoinAssignerAssignment = {
+type JoinAssigneeAssignment = {
   id: number
   order: number
   assignee: Profile
 }
 
-type JoinTaskNAssignerAssignment = JoinAssignerAssignment & {
+type JoinTaskNAssigneeAssignment = JoinAssigneeAssignment & {
   task: Task
 }
 
 type ResponseTaskAssignment = {
   task: Task
-  assignments: JoinAssignerAssignment[]
+  assignments: JoinAssigneeAssignment[]
 }
 
 function toResponseTaskAssignments(
-  inputs: JoinTaskNAssignerAssignment[],
+  inputs: JoinTaskNAssigneeAssignment[],
 ): ResponseTaskAssignment[] {
   const taskMap: Map<number, Task> = new Map()
-  const assignmentsMap: Map<number, JoinAssignerAssignment[]> = new Map()
+  const assignmentsMap: Map<number, JoinAssigneeAssignment[]> = new Map()
 
   for (const queryAssignment of inputs) {
     const taskId = queryAssignment.task.id
@@ -78,9 +78,9 @@ async function findJoinTaskAssignments(
   return displayAssignments
 }
 
-async function findJoinTaskNAssignerAssignments(
+async function findJoinTaskNAssigneeAssignments(
   whereParams: Prisma.TaskAssignmentWhereInput,
-): Promise<JoinTaskNAssignerAssignment[]> {
+): Promise<JoinTaskNAssigneeAssignment[]> {
   const taskAssignments = await prisma.taskAssignment.findMany({
     where: whereParams,
     select: {
@@ -114,7 +114,7 @@ async function findResponseTaskAssignments(memberIds: number[]): Promise<Respons
   const assigneeIdsParams = memberIds.map((id) => ({
     assignee_id: id,
   }))
-  const taskAssignments = await findJoinTaskNAssignerAssignments({
+  const taskAssignments = await findJoinTaskNAssigneeAssignments({
     OR: assigneeIdsParams,
   })
   return toResponseTaskAssignments(taskAssignments)
@@ -123,7 +123,7 @@ async function findResponseTaskAssignments(memberIds: number[]): Promise<Respons
 async function findResponseTaskAssignment(
   whereParams: Prisma.TaskAssignmentWhereInput,
 ): Promise<ResponseTaskAssignment | null> {
-  const taskAssignments = await findJoinTaskNAssignerAssignments(whereParams)
+  const taskAssignments = await findJoinTaskNAssigneeAssignments(whereParams)
   if (taskAssignments.length === 0) return null
   return toResponseTaskAssignments(taskAssignments)[0]
 }

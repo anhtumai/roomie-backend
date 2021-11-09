@@ -337,7 +337,7 @@ async function updateOrder(
   }
 }
 
-async function updateAssigners(
+async function updateAssignees(
   req: RequestAfterExtractor,
   res: Response,
   next: NextFunction
@@ -364,6 +364,6 @@ export default {
   create,
   update,
   updateOrder,
-  updateAssigners,
+  updateAssignees,
   deleteOne,
 }

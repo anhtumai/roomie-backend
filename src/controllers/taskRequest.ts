@@ -69,7 +69,7 @@ async function updateState(
   }
 
   try {
-    const taskRequest = await taskRequestModel.findJoinAssignerRequest({
+    const taskRequest = await taskRequestModel.findJoinAssigneeRequest({
       id: taskRequestId,
     })
     if (!taskRequest || taskRequest.assignee.id !== req.account.id) {

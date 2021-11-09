@@ -62,7 +62,7 @@ tasksRouter.put(
   middleware.accountExtractor,
   creatorNAdminPermissionValidator,
   assigneesValidator,
-  taskController.updateAssigners
+  taskController.updateAssignees
 )
 
 export default tasksRouter
