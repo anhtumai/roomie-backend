@@ -225,17 +225,14 @@ async function deleteOne(
 ): Promise<void> {
   const taskId = Number(req.params.id)
 
-  async function notifyAfterDeleting(taskRequests: TaskRequest[], deletedTaskName: string) {
+  async function notifyAfterDeleting(deletedTaskName: string) {
     try {
-      let notifiedChannels: string[] = []
-      if (taskRequests.length > 0) {
-        notifiedChannels = taskRequests.map((taskRequest) => makeChannel(taskRequest.assignee_id))
-      } else {
-        const allMembers = await accountModel.findMany({
-          apartment_id: Number(req.account.apartment?.id),
-        })
-        notifiedChannels = allMembers.map((member) => makeChannel(member.id))
-      }
+      const allMembers = await accountModel.findMany({
+        apartment_id: Number(req.account.apartment?.id),
+      })
+      const notifiedChannels = allMembers
+        .filter((member) => member.id !== req.account.id)
+        .map((member) => makeChannel(member.id))
       await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
         state: pusherConstant.DELETED_STATE,
         task: deletedTaskName,
@@ -247,11 +244,9 @@ async function deleteOne(
   }
 
   try {
-    const taskRequests = await taskRequestModel.findMany({ task_id: taskId })
-
     const deletedTask = await taskModel.deleteOne({ id: taskId })
     res.status(204).json()
-    await notifyAfterDeleting(taskRequests, deletedTask.name)
+    await notifyAfterDeleting(deletedTask.name)
   } catch (err) {
     next(err)
   }
