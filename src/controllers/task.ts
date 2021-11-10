@@ -219,6 +219,7 @@ async function update(
       console.log(error)
     }
   }
+
   const taskId = Number(req.params.id)
 
   if (!validateTaskProperty(req.body)) {
@@ -361,17 +362,38 @@ async function updateAssignees(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  async function notifyAfterReAssigning(reAssignedTaskName: string) {
+    try {
+      const allMembers = await accountModel.findMany({
+        apartment_id: Number(req.account.apartment?.id),
+      })
+      const notifiedChannels = allMembers
+        .filter((member) => member.id !== req.account.id)
+        .map((member) => makeChannel(member.id))
+      await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
+        state: pusherConstant.REASSIGNED_STATE,
+        task: reAssignedTaskName,
+        assigner: req.account.username,
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   const assigneeUsernames: string[] = req.body.assignees
   const taskId = Number(req.params.id)
   const members: Profile[] = res.locals.members
 
   try {
+    const task = await taskModel.find({ id: taskId })
     await taskRequestModel.deleteMany({ task_id: taskId })
     await taskAssignmentModel.deleteMany({ task_id: taskId })
 
     const assignees = members.filter((member) => assigneeUsernames.includes(member.username))
     await createTaskRequests(assignees, taskId)
     res.status(200).json({ assignees: assigneeUsernames })
+
+    await notifyAfterReAssigning(task.name)
   } catch (err) {
     next(err)
   }
