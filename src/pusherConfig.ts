@@ -29,6 +29,8 @@ export const pusherConstant = {
   LEAVE_STATE: 'LEFT',
   ASSIGNED_STATE: 'ASSIGNED',
   DELETED_STATE: 'DELETED',
+  EDITED_STATE: 'EDITED',
+  REASSIGNED_STATE: 'REASSIGNED',
 }
 
 export default pusher

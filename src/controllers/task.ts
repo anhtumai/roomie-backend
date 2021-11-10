@@ -202,6 +202,23 @@ async function update(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  async function notifyAfterUpdating(updatedTaskName: string) {
+    try {
+      const allMembers = await accountModel.findMany({
+        apartment_id: Number(req.account.apartment?.id),
+      })
+      const notifiedChannels = allMembers
+        .filter((member) => member.id !== req.account.id)
+        .map((member) => makeChannel(member.id))
+      await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
+        state: pusherConstant.EDITED_STATE,
+        task: updatedTaskName,
+        updater: req.account.username,
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
   const taskId = Number(req.params.id)
 
   if (!validateTaskProperty(req.body)) {
@@ -213,6 +230,8 @@ async function update(
   try {
     const updatedTask = await taskModel.update({ id: taskId }, newTaskProperty)
     res.status(200).json(updatedTask)
+
+    await notifyAfterUpdating(updatedTask.name)
   } catch (err) {
     next(err)
   }
