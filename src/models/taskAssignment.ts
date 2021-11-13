@@ -25,7 +25,7 @@ type ResponseTaskAssignment = {
 }
 
 function toResponseTaskAssignments(
-  inputs: JoinTaskNAssigneeAssignment[],
+  inputs: JoinTaskNAssigneeAssignment[]
 ): ResponseTaskAssignment[] {
   const taskMap: Map<number, Task> = new Map()
   const assignmentsMap: Map<number, JoinAssigneeAssignment[]> = new Map()
@@ -54,7 +54,7 @@ function toResponseTaskAssignments(
 }
 
 async function findJoinTaskAssignments(
-  whereParams: Prisma.TaskAssignmentWhereInput,
+  whereParams: Prisma.TaskAssignmentWhereInput
 ): Promise<JoinTaskAssignment[]> {
   const displayAssignments = await prisma.taskAssignment.findMany({
     where: whereParams,
@@ -79,7 +79,7 @@ async function findJoinTaskAssignments(
 }
 
 async function findJoinTaskNAssigneeAssignments(
-  whereParams: Prisma.TaskAssignmentWhereInput,
+  whereParams: Prisma.TaskAssignmentWhereInput
 ): Promise<JoinTaskNAssigneeAssignment[]> {
   const taskAssignments = await prisma.taskAssignment.findMany({
     where: whereParams,
@@ -121,7 +121,7 @@ async function findResponseTaskAssignments(memberIds: number[]): Promise<Respons
 }
 
 async function findResponseTaskAssignment(
-  whereParams: Prisma.TaskAssignmentWhereInput,
+  whereParams: Prisma.TaskAssignmentWhereInput
 ): Promise<ResponseTaskAssignment | null> {
   const taskAssignments = await findJoinTaskNAssigneeAssignments(whereParams)
   if (taskAssignments.length === 0) return null
@@ -144,7 +144,7 @@ async function deleteMany(whereParams: Prisma.TaskAssignmentWhereInput): Promise
 
 async function update(
   whereParams: Prisma.TaskAssignmentWhereUniqueInput,
-  dataParams: Prisma.TaskAssignmentUpdateInput,
+  dataParams: Prisma.TaskAssignmentUpdateInput
 ): Promise<TaskAssignment | null> {
   const updatedTask = await prisma.taskAssignment.update({
     where: whereParams,

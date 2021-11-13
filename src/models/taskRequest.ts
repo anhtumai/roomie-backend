@@ -59,7 +59,7 @@ async function findMany(whereParams: Prisma.TaskRequestWhereInput): Promise<Task
 }
 
 async function findJoinAssigneeRequest(
-  whereParams: Prisma.TaskRequestWhereUniqueInput,
+  whereParams: Prisma.TaskRequestWhereUniqueInput
 ): Promise<JoinAssigneeRequest | null> {
   const displayRequest = await prisma.taskRequest.findUnique({
     where: whereParams,
@@ -79,7 +79,7 @@ async function findJoinAssigneeRequest(
 }
 
 async function findJoinTaskRequests(
-  whereParams: Prisma.TaskRequestWhereInput,
+  whereParams: Prisma.TaskRequestWhereInput
 ): Promise<JoinTaskRequest[]> {
   const displayRequest = await prisma.taskRequest.findMany({
     where: whereParams,
@@ -104,7 +104,7 @@ async function findJoinTaskRequests(
 }
 
 async function findJoinTaskNAssigneeRequests(
-  whereParams: Prisma.TaskRequestWhereInput,
+  whereParams: Prisma.TaskRequestWhereInput
 ): Promise<JoinTaskNAssigneeRequest[]> {
   const taskRequests = await prisma.taskRequest.findMany({
     where: whereParams,
@@ -149,7 +149,7 @@ async function findResponseTaskRequests(memberIds: number[]): Promise<ResponseTa
 }
 
 async function findResponseTaskRequest(
-  whereParams: Prisma.TaskRequestWhereInput,
+  whereParams: Prisma.TaskRequestWhereInput
 ): Promise<ResponseTaskRequest | null> {
   const taskRequests = await findJoinTaskNAssigneeRequests(whereParams)
   if (taskRequests.length === 0) return null
@@ -165,7 +165,7 @@ async function createMany(inputs: Prisma.TaskRequestUncheckedCreateInput[]): Pro
 
 async function update(
   whereParams: Prisma.TaskRequestWhereUniqueInput,
-  dataParams: Prisma.TaskRequestUncheckedUpdateInput,
+  dataParams: Prisma.TaskRequestUncheckedUpdateInput
 ): Promise<TaskRequest> {
   const updatedRequest = await prisma.taskRequest.update({
     where: whereParams,
@@ -176,8 +176,8 @@ async function update(
 }
 
 async function updateMany(
-  whereParams: Prisma.TaskRequestWhereUniqueInput,
-  dataParams: Prisma.TaskRequestUncheckedUpdateInput,
+  whereParams: Prisma.TaskRequestWhereInput,
+  dataParams: Prisma.TaskRequestUncheckedUpdateInput
 ): Promise<number> {
   const updateUsers = await prisma.taskRequest.updateMany({
     where: whereParams,

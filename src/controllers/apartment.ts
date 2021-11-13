@@ -134,43 +134,101 @@ async function deleteOne(
 }
 
 async function leave(req: RequestAfterExtractor, res: Response, next: NextFunction): Promise<void> {
+  async function notifyAfterLeaving(memberIds: number[], currentAdminUsername: string) {
+    try {
+      await pusher.trigger(
+        memberIds.map((memberId) => makeChannel(memberId)),
+        pusherConstant.APARTMENT_EVENT,
+        {
+          state: pusherConstant.LEAVE_STATE,
+          leaver: req.account.username,
+          admin: currentAdminUsername,
+        }
+      )
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
   const apartment = req.account.apartment
   if (!apartment) {
     res.status(204).json()
     return
   }
+
+  let currentAdminUsername = ''
   try {
+    const apartmentId = apartment.id
+
+    const displayApartment = await apartmentModel.findJoinAdminNMembersApartment({
+      id: apartmentId,
+    })
+
+    currentAdminUsername = displayApartment.admin.username
+    const memberIds = displayApartment.members.map((member) => member.id)
+    const responseTaskRequests = await taskRequestModel.findResponseTaskRequests(memberIds)
+
+    const responseAssignments = await taskAssignmentModel.findResponseTaskAssignments(memberIds)
+
+    for (const { task, requests } of responseTaskRequests) {
+      if (requests.length === 1 && requests[0].assignee.id === req.account.id) {
+        await taskModel.deleteOne({ id: task.id })
+        continue
+      }
+
+      const leaverRequest = requests.find((_request) => _request.assignee.id === req.account.id)
+
+      if (!leaverRequest) continue
+      await taskRequestModel.updateMany({ task_id: task.id }, { state: 'pending' })
+    }
+    await taskRequestModel.deleteMany({ assignee_id: req.account.id })
+
+    for (const { task, assignments } of responseAssignments) {
+      if (assignments.length === 1 && assignments[0].assignee.id === req.account.id) {
+        await taskModel.deleteOne({ id: task.id })
+        continue
+      }
+
+      const leaverAssignment = assignments.find(
+        (assignment) => assignment.assignee.id === req.account.id
+      )
+
+      if (!leaverAssignment) continue
+
+      for (const assignment of assignments) {
+        if (assignment.order > leaverAssignment.order) {
+          await taskAssignmentModel.update({ id: assignment.id }, { order: assignment.order - 1 })
+        }
+      }
+    }
+    await taskAssignmentModel.deleteMany({ assignee_id: req.account.id })
+
     await accountModel.deleteApartmentId({ id: req.account.id })
+
+    if (displayApartment.members.length === 1) {
+      await apartmentModel.deleteOne({ id: displayApartment.id })
+    } else {
+      if (displayApartment.admin.id === req.account.id) {
+        const newAdmin = displayApartment.members.filter(
+          (member) => member.id !== req.account.id
+        )[0]
+        await apartmentModel.update({ id: apartment.id }, { admin_id: newAdmin.id })
+        currentAdminUsername = newAdmin.username
+      }
+    }
+
     res.status(200).json({
       msg: `Leave the aparment ${req.account.apartment.name}`,
     })
+
+    await notifyAfterLeaving(
+      displayApartment.members
+        .filter((member) => member.id !== req.account.id)
+        .map((member) => member.id),
+      currentAdminUsername
+    )
   } catch (err) {
     next(err)
-  }
-
-  try {
-    const apartment = await apartmentModel.findJoinAdminNMembersApartment({
-      id: req.account.apartment.id,
-    })
-    if (apartment.members.length === 0) {
-      await apartmentModel.deleteOne({ id: apartment.id })
-      return
-    }
-    if (apartment.admin.id === req.account.id) {
-      await apartmentModel.update({ id: apartment.id }, { admin_id: apartment.members[0].id })
-    }
-    pusher.trigger(
-      apartment.members.map((member) => makeChannel(member.id)),
-      pusherConstant.APARTMENT_EVENT,
-      {
-        state: pusherConstant.LEAVE_STATE,
-        leaver: req.account.username,
-        admin: apartment.members[0].username,
-      }
-    )
-    // Future work: rearrange task order and task assignment when a person leaves
-  } catch (err) {
-    console.log(err)
   }
 }
 
