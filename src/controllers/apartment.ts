@@ -10,7 +10,8 @@ import taskModel from '../models/task'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
-import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
+
+import { leaveApartmentHelper } from './helper/apartment'
 
 function validateApartmentProperty(apartmentProperty: any): boolean {
   const { name } = apartmentProperty
@@ -134,22 +135,6 @@ async function deleteOne(
 }
 
 async function leave(req: RequestAfterExtractor, res: Response, next: NextFunction): Promise<void> {
-  async function notifyAfterLeaving(memberIds: number[], currentAdminUsername: string) {
-    try {
-      await pusher.trigger(
-        memberIds.map((memberId) => makeChannel(memberId)),
-        pusherConstant.APARTMENT_EVENT,
-        {
-          state: pusherConstant.LEAVE_STATE,
-          leaver: req.account.username,
-          admin: currentAdminUsername,
-        }
-      )
-    } catch (err) {
-      console.log(err)
-    }
-  }
-
   const apartment = req.account.apartment
   if (!apartment) {
     res.status(204).json()
@@ -166,42 +151,9 @@ async function leave(req: RequestAfterExtractor, res: Response, next: NextFuncti
 
     currentAdminUsername = displayApartment.admin.username
     const memberIds = displayApartment.members.map((member) => member.id)
-    const responseTaskRequests = await taskRequestModel.findResponseTaskRequests(memberIds)
 
-    const responseAssignments = await taskAssignmentModel.findResponseTaskAssignments(memberIds)
-
-    for (const { task, requests } of responseTaskRequests) {
-      if (requests.length === 1 && requests[0].assignee.id === req.account.id) {
-        await taskModel.deleteOne({ id: task.id })
-        continue
-      }
-
-      const leaverRequest = requests.find((_request) => _request.assignee.id === req.account.id)
-
-      if (!leaverRequest) continue
-      await taskRequestModel.updateMany({ task_id: task.id }, { state: 'pending' })
-    }
-    await taskRequestModel.deleteMany({ assignee_id: req.account.id })
-
-    for (const { task, assignments } of responseAssignments) {
-      if (assignments.length === 1 && assignments[0].assignee.id === req.account.id) {
-        await taskModel.deleteOne({ id: task.id })
-        continue
-      }
-
-      const leaverAssignment = assignments.find(
-        (assignment) => assignment.assignee.id === req.account.id
-      )
-
-      if (!leaverAssignment) continue
-
-      for (const assignment of assignments) {
-        if (assignment.order > leaverAssignment.order) {
-          await taskAssignmentModel.update({ id: assignment.id }, { order: assignment.order - 1 })
-        }
-      }
-    }
-    await taskAssignmentModel.deleteMany({ assignee_id: req.account.id })
+    await leaveApartmentHelper.cleanTaskRequests(memberIds, req.account.id)
+    await leaveApartmentHelper.cleanTaskAssignments(memberIds, req.account.id)
 
     await accountModel.deleteApartmentId({ id: req.account.id })
 
@@ -221,10 +173,9 @@ async function leave(req: RequestAfterExtractor, res: Response, next: NextFuncti
       msg: `Leave the aparment ${req.account.apartment.name}`,
     })
 
-    await notifyAfterLeaving(
-      displayApartment.members
-        .filter((member) => member.id !== req.account.id)
-        .map((member) => member.id),
+    await leaveApartmentHelper.notifyAfterLeaving(
+      memberIds.filter((memberId) => memberId !== req.account.id),
+      req.account.username,
       currentAdminUsername
     )
   } catch (err) {
