@@ -1,4 +1,4 @@
-import { Response, NextFunction, Router } from 'express'
+import { Response, NextFunction } from 'express'
 
 import accountModel from '../models/account'
 import invitationModel from '../models/invitation'
@@ -7,7 +7,7 @@ import processClientError from '../util/error'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 
-import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
+import { invitationHelper } from './helper/invitation'
 
 async function findMany(
   req: RequestAfterExtractor,
@@ -70,12 +70,11 @@ async function create(
       req.account.apartment.id
     )
     res.status(201).json(newInvitation)
-    await pusher.trigger(makeChannel(invitee.id), pusherConstant.INVITATION_EVENT, {
-      state: pusherConstant.CREATED_STATE,
-      invitor: req.account.username,
-      invitee: invitee.username,
-      apartment: req.account.apartment.name,
-    })
+    await invitationHelper.notifyAfterCreating(
+      req.account.username,
+      invitee,
+      req.account.apartment.name
+    )
   } catch (err) {
     if (err.code === 'P2002') {
       const errorMessage = 'Conflict error: You had sent an invitation to this person'
@@ -106,12 +105,7 @@ async function reject(
         `Reject invitation to ${invitation.apartment.name} ` +
         `from ${invitation.invitor.username}`,
     })
-    await pusher.trigger(makeChannel(invitation.invitor.id), pusherConstant.INVITATION_EVENT, {
-      state: pusherConstant.REJECTED_STATE,
-      invitor: invitation.invitor.username,
-      invitee: req.account.username,
-      apartment: invitation.apartment.name,
-    })
+    await invitationHelper.notifyAfterRejecting(invitation, req.account.username)
   } catch (err) {
     next(err)
   }
@@ -148,19 +142,11 @@ async function accept(
         `Accept invitation to ${invitation.apartment.name} ` +
         `from ${invitation.invitor.username}`,
     })
-    pusher.trigger(makeChannel(invitation.invitor.id), pusherConstant.INVITATION_EVENT, {
-      state: pusherConstant.ACCEPTED_STATE,
-      invitor: invitation.invitor.username,
-      invitee: req.account.username,
-      apartment: invitation.apartment.name,
-    })
-    toRejectInvitations.forEach((i) =>
-      pusher.trigger(makeChannel(i.invitor.id), pusherConstant.INVITATION_EVENT, {
-        state: pusherConstant.REJECTED_STATE,
-        invitor: i.invitor.username,
-        invitee: req.account.username,
-        apartment: i.apartment.name,
-      })
+    await invitationHelper.notifyAfterAccepting(
+      invitation.apartment,
+      invitation.invitor.username,
+      req.account.username,
+      toRejectInvitations
     )
   } catch (err) {
     next(err)
@@ -186,12 +172,11 @@ async function deleteOne(
     await invitationModel.deleteMany({ id: invitationId })
 
     res.status(204).json()
-    await pusher.trigger(makeChannel(invitation.invitee.id), 'invitation', {
-      state: pusherConstant.CANCELED_STATE,
-      invitor: req.account.username,
-      invitee: invitation.invitee.username,
-      apartment: req.account.apartment.name,
-    })
+    await invitationHelper.notifyAfterCancelling(
+      invitation,
+      req.account.username,
+      req.account.apartment.name
+    )
   } catch (err) {
     next(err)
   }
