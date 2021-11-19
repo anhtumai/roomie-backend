@@ -1,4 +1,3 @@
-import { Apartment } from '@prisma/client'
 import { PendingInvitation } from '../../models/invitation'
 import accountModel from '../../models/account'
 

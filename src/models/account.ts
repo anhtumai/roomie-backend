@@ -80,11 +80,12 @@ async function create(username: string, name: string, passwordHash: string): Pro
 async function update(
   whereParams: Prisma.AccountWhereUniqueInput,
   dataParams: Prisma.AccountUncheckedUpdateInput
-): Promise<void> {
-  await prisma.account.update({
+): Promise<Account> {
+  const updatedAccount = await prisma.account.update({
     where: whereParams,
     data: dataParams,
   })
+  return updatedAccount
 }
 
 async function updateMany(

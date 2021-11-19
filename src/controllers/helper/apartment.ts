@@ -8,7 +8,7 @@ async function notifyAfterLeaving(
   memberIds: number[],
   leaverUsername: string,
   currentAdminUsername: string
-) {
+): Promise<void> {
   try {
     await pusher.trigger(
       memberIds.map((memberId) => makeChannel(memberId)),
@@ -24,8 +24,7 @@ async function notifyAfterLeaving(
   }
 }
 
-async function cleanTaskRequests(memberIds: number[], leaverId: number) {
-  //
+async function cleanTaskRequests(memberIds: number[], leaverId: number): Promise<void> {
   const responseTaskRequests = await taskRequestModel.findResponseTaskRequests(memberIds)
 
   for (const { task, requests } of responseTaskRequests) {
@@ -42,7 +41,7 @@ async function cleanTaskRequests(memberIds: number[], leaverId: number) {
   await taskRequestModel.deleteMany({ assignee_id: leaverId })
 }
 
-async function cleanTaskAssignments(memberIds: number[], leaverId: number) {
+async function cleanTaskAssignments(memberIds: number[], leaverId: number): Promise<void> {
   const responseAssignments = await taskAssignmentModel.findResponseTaskAssignments(memberIds)
 
   for (const { task, assignments } of responseAssignments) {
