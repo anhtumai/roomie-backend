@@ -1,6 +1,8 @@
 import { Router } from 'express'
 
-import apartmentController, { adminPermissionValidator } from '../controllers/apartment'
+import apartmentController, {
+  adminPermissionValidatorForApartmentsId,
+} from '../controllers/apartment'
 
 import middleware from '../util/middleware'
 
@@ -12,7 +14,7 @@ apartmentsRouter.put(
   '/:id',
   middleware.accountExtractor,
   middleware.paramsIdValidator,
-  adminPermissionValidator,
+  adminPermissionValidatorForApartmentsId,
   apartmentController.update
 )
 
@@ -20,7 +22,7 @@ apartmentsRouter.delete(
   '/:id',
   middleware.accountExtractor,
   middleware.paramsIdValidator,
-  adminPermissionValidator,
+  adminPermissionValidatorForApartmentsId,
   apartmentController.deleteOne
 )
 

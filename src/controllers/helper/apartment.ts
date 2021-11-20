@@ -24,6 +24,26 @@ async function notifyAfterLeaving(
   }
 }
 
+async function notifyAfterRemovingMember(
+  memberIds: number[],
+  removedMemberUsername: string,
+  adminUsername: string
+): Promise<void> {
+  try {
+    await pusher.trigger(
+      memberIds.map((memberId) => makeChannel(memberId)),
+      pusherConstant.APARTMENT_EVENT,
+      {
+        state: pusherConstant.MEMBER_REMOVED_STATE,
+        removedMember: removedMemberUsername,
+        admin: adminUsername,
+      }
+    )
+  } catch (err) {
+    console.log(err)
+  }
+}
+
 async function cleanTaskRequests(memberIds: number[], leaverId: number): Promise<void> {
   const responseTaskRequests = await taskRequestModel.findResponseTaskRequests(memberIds)
 
@@ -63,8 +83,9 @@ async function cleanTaskAssignments(memberIds: number[], leaverId: number): Prom
   await taskAssignmentModel.deleteMany({ assignee_id: leaverId })
 }
 
-export const leaveApartmentHelper = {
+export const apartmentHelper = {
   notifyAfterLeaving,
+  notifyAfterRemovingMember,
   cleanTaskRequests,
   cleanTaskAssignments,
 }

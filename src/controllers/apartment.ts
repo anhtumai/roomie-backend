@@ -11,27 +11,54 @@ import taskModel from '../models/task'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 
-import { leaveApartmentHelper } from './helper/apartment'
+import { apartmentHelper } from './helper/apartment'
 
 function validateApartmentProperty(apartmentProperty: any): boolean {
   const { name } = apartmentProperty
   return typeof name === 'string'
 }
 
-export async function adminPermissionValidator(
+// middleware for /api/apartments/:id endpoints
+export async function adminPermissionValidatorForApartmentsId(
   req: RequestAfterExtractor,
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const id = Number(req.params.id)
+  const apartmentId = Number(req.params.id)
 
-  const apartment = await apartmentModel.find({ id })
+  const apartment = await apartmentModel.find({ id: apartmentId })
 
   if (!apartment || apartment.admin_id !== req.account.id) {
     const errorMessage = 'Forbidden error'
     return processClientError(res, 403, errorMessage)
   }
   next()
+}
+
+// middleware for /api/me/apartment/... endpoints
+export async function adminPermissionValidatorForMeApartment(
+  req: RequestAfterExtractor,
+  res: Response,
+  next: NextFunction
+) {
+  if (!req.account.apartment) {
+    const errorMessage = 'Bad Request: You don\'t have an apartment'
+    return processClientError(res, 400, errorMessage)
+  }
+
+  try {
+    const apartmentId = req.account.apartment.id
+
+    const displayApartment = await apartmentModel.find({ id: apartmentId })
+
+    if (displayApartment.admin_id !== req.account.id) {
+      const errorMessage = 'Forbidden error'
+      return processClientError(res, 403, errorMessage)
+    }
+    next()
+  } catch (err) {
+    next(err)
+  }
 }
 
 async function findJoinTasksApartment(
@@ -152,8 +179,8 @@ async function leave(req: RequestAfterExtractor, res: Response, next: NextFuncti
     currentAdminUsername = displayApartment.admin.username
     const memberIds = displayApartment.members.map((member) => member.id)
 
-    await leaveApartmentHelper.cleanTaskRequests(memberIds, req.account.id)
-    await leaveApartmentHelper.cleanTaskAssignments(memberIds, req.account.id)
+    await apartmentHelper.cleanTaskRequests(memberIds, req.account.id)
+    await apartmentHelper.cleanTaskAssignments(memberIds, req.account.id)
 
     await accountModel.deleteApartmentId({ id: req.account.id })
 
@@ -173,11 +200,49 @@ async function leave(req: RequestAfterExtractor, res: Response, next: NextFuncti
       msg: `Leave the aparment ${req.account.apartment.name}`,
     })
 
-    await leaveApartmentHelper.notifyAfterLeaving(
+    await apartmentHelper.notifyAfterLeaving(
       memberIds.filter((memberId) => memberId !== req.account.id),
       req.account.username,
       currentAdminUsername
     )
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function removeMember(
+  req: RequestAfterExtractor,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const removedMemberId = Number(req.params.id)
+  const apartmentId = Number(req.account.apartment.id)
+
+  if (removedMemberId === req.account.id) {
+    const errorMessage =
+      'Bad Request: You cannot remove yourself. Please leave the apartment instead.'
+    return processClientError(res, 400, errorMessage)
+  }
+
+  try {
+    const displayApartment = await apartmentModel.findJoinAdminNMembersApartment({
+      id: apartmentId,
+    })
+    const memberIds = displayApartment.members.map((member) => member.id)
+
+    if (!memberIds.includes(removedMemberId)) {
+      const errorMessage = `Bad Request: apartment has no member with ID ${removedMemberId}`
+      return processClientError(res, 400, errorMessage)
+    }
+
+    await apartmentHelper.cleanTaskRequests(memberIds, removedMemberId)
+    await apartmentHelper.cleanTaskAssignments(memberIds, removedMemberId)
+
+    await accountModel.deleteApartmentId({ id: removedMemberId })
+
+    res.status(200).json({
+      msg: `Remove member with id ${removedMemberId}`,
+    })
   } catch (err) {
     next(err)
   }
@@ -189,4 +254,5 @@ export default {
   update,
   deleteOne,
   leave,
+  removeMember,
 }

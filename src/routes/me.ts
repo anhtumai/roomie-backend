@@ -1,7 +1,9 @@
 import { Router } from 'express'
 
 import accountController from '../controllers/account'
-import apartmentController from '../controllers/apartment'
+import apartmentController, {
+  adminPermissionValidatorForMeApartment,
+} from '../controllers/apartment'
 import invitationController from '../controllers/invitation'
 import taskController from '../controllers/task'
 
@@ -12,6 +14,14 @@ const meRouter = Router()
 meRouter.get('/', middleware.accountExtractor, accountController.findJoinApartmentAccount)
 
 meRouter.get('/apartment', middleware.accountExtractor, apartmentController.findJoinTasksApartment)
+
+meRouter.delete(
+  '/apartment/members/:id',
+  middleware.accountExtractor,
+  middleware.paramsIdValidator,
+  adminPermissionValidatorForMeApartment,
+  apartmentController.removeMember
+)
 
 meRouter.delete('/apartment', middleware.accountExtractor, apartmentController.leave)
 
