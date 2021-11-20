@@ -31,7 +31,7 @@ model Account {
 model Apartment {
 	@@map(name: "apartment")
 	id			Int     @id @default(autoincrement())
-	name		String	@unique @db.VarChar(30)
+	name		String	@db.VarChar(30)
 	admin		Account @relation("Admin", fields: [admin_id], references: [id])
 	admin_id	Int
 
