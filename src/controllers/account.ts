@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
+import Joi from 'joi'
 
 import { Request, Response, NextFunction } from 'express'
 import { Prisma } from '@prisma/client'
@@ -9,12 +10,41 @@ import accountModel from '../models/account'
 import processClientError from '../util/error'
 import { RequestAfterExtractor } from '../types/express-middleware'
 
-function isAccountPropertyValid(accountProperty: any): boolean {
+type UpdateAccountProperty = {
+  name?: string
+  username?: string
+  password?: string
+}
+
+function isCreateAccountPropertyValid(accountProperty: any): boolean {
   const { name, username, password } = accountProperty
   if (typeof username !== 'string' || typeof name !== 'string' || typeof password !== 'string')
     return false
   if (username.length < 5 || name.length < 10 || password.length < 10) return false
   return true
+}
+
+function isUpdateAccountPropertyValid(updateAccountProperty: any): boolean {
+  const schema = Joi.object({
+    username: Joi.string().min(5),
+    name: Joi.string().min(10),
+    password: Joi.string().min(10),
+  }).min(1)
+
+  const validatedObject = schema.validate(updateAccountProperty)
+  return validatedObject.error === undefined
+}
+
+async function parseUpdateAccountProperty(
+  updateAccountProperty: any
+): Promise<UpdateAccountProperty> {
+  const result = { ...updateAccountProperty }
+  if (typeof updateAccountProperty.password === 'string') {
+    const saltRounds = 10
+    const passwordHash = await bcrypt.hash(updateAccountProperty.password, saltRounds)
+    result.password = passwordHash
+  }
+  return result
 }
 
 async function findJoinApartmentAccount(
@@ -73,7 +103,7 @@ async function login(req: Request, res: Response, next: NextFunction): Promise<v
 async function create(req: Request, res: Response, next: NextFunction): Promise<void> {
   const body = req.body
 
-  if (!isAccountPropertyValid(req.body)) {
+  if (!isCreateAccountPropertyValid(req.body)) {
     const errorMessage = 'Invalid body'
     return processClientError(res, 400, errorMessage)
   }
@@ -108,19 +138,14 @@ async function update(
     const errorMessage = 'Forbidden error'
     return processClientError(res, 403, errorMessage)
   }
-  if (!isAccountPropertyValid(req.body)) {
+  if (!isUpdateAccountPropertyValid(req.body)) {
     const errorMessage = 'Invalid body'
     return processClientError(res, 400, errorMessage)
   }
 
-  const saltRounds = 10
-  const passwordHash = await bcrypt.hash(body.password, saltRounds)
-
   try {
-    const updatedAccount = await accountModel.update(
-      { id: accountId },
-      { name: body.name, username: body.username, password: passwordHash }
-    )
+    const updateAccountProperty = await parseUpdateAccountProperty(body)
+    const updatedAccount = await accountModel.update({ id: accountId }, updateAccountProperty)
 
     const { id, name, username } = updatedAccount
     res.status(200).json({ id, name, username })
