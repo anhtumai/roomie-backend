@@ -41,7 +41,7 @@ export async function adminPermissionValidatorForMeApartment(
   req: RequestAfterExtractor,
   res: Response,
   next: NextFunction
-) {
+): Promise<void> {
   if (!req.account.apartment) {
     const errorMessage = 'Bad Request: You don\'t have an apartment'
     return processClientError(res, 400, errorMessage)
@@ -138,7 +138,7 @@ async function update(
     res.status(200).json(updatedApartment)
 
     const memberIds = displayApartment.members.map((member) => member.id)
-    await apartmentHelper.notifyAfterUpdating(
+    await apartmentHelper.notifyAfterEditting(
       memberIds.filter((memberId) => memberId !== req.account.id),
       updatedApartment.name
     )

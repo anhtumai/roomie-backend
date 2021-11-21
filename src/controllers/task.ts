@@ -328,6 +328,24 @@ async function updateOrder(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  async function notifyAfterReorder(reorderTaskName: string) {
+    try {
+      const allMembers = await accountModel.findMany({
+        apartment_id: Number(req.account.apartment?.id),
+      })
+      const notifiedChannels = allMembers
+        .filter((member) => member.id !== req.account.id)
+        .map((member) => makeChannel(member.id))
+      await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
+        state: pusherConstant.REORDERED_STATE,
+        task: reorderTaskName,
+        assigner: req.account.username,
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   const taskId = Number(req.params.id)
   const usernamesOrder: string[] = req.body.order
   try {
@@ -352,6 +370,7 @@ async function updateOrder(
       await taskAssignmentModel.update({ id: assignmentId }, { order: i })
     }
     res.status(200).json({ order: usernamesOrder })
+    await notifyAfterReorder(responseTaskAssignment.task.name)
   } catch (err) {
     next(err)
   }
