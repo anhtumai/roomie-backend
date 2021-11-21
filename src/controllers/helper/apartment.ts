@@ -26,8 +26,7 @@ async function notifyAfterLeaving(
 
 async function notifyAfterRemovingMember(
   memberIds: number[],
-  removedMemberUsername: string,
-  adminUsername: string
+  removedMemberUsername: string
 ): Promise<void> {
   try {
     await pusher.trigger(
@@ -36,7 +35,21 @@ async function notifyAfterRemovingMember(
       {
         state: pusherConstant.MEMBER_REMOVED_STATE,
         removedMember: removedMemberUsername,
-        admin: adminUsername,
+      }
+    )
+  } catch (err) {
+    console.log(err)
+  }
+}
+
+async function notifyAfterUpdating(memberIds: number[], apartmentName: string): Promise<void> {
+  try {
+    await pusher.trigger(
+      memberIds.map((memberId) => makeChannel(memberId)),
+      pusherConstant.APARTMENT_EVENT,
+      {
+        state: pusherConstant.MEMBER_REMOVED_STATE,
+        apartmentName: apartmentName,
       }
     )
   } catch (err) {
@@ -86,6 +99,7 @@ async function cleanTaskAssignments(memberIds: number[], leaverId: number): Prom
 export const apartmentHelper = {
   notifyAfterLeaving,
   notifyAfterRemovingMember,
+  notifyAfterUpdating,
   cleanTaskRequests,
   cleanTaskAssignments,
 }

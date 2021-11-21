@@ -32,6 +32,7 @@ export const pusherConstant = {
   EDITED_STATE: 'EDITED',
   REASSIGNED_STATE: 'REASSIGNED',
   MEMBER_REMOVED_STATE: 'MEMBER_REMOVED',
+  UPDATED_STATE: 'UPDATED',
 }
 
 export default pusher

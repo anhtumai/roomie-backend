@@ -12,6 +12,7 @@ import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 
 import { apartmentHelper } from './helper/apartment'
+import apartment from '../models/apartment'
 
 function validateApartmentProperty(apartmentProperty: any): boolean {
   const { name } = apartmentProperty
@@ -131,7 +132,16 @@ async function update(
   const { name } = req.body
   try {
     const updatedApartment = await apartmentModel.update({ id: apartmentId }, { name })
+    const displayApartment = await apartmentModel.findJoinAdminNMembersApartment({
+      id: apartmentId,
+    })
     res.status(200).json(updatedApartment)
+
+    const memberIds = displayApartment.members.map((member) => member.id)
+    await apartmentHelper.notifyAfterUpdating(
+      memberIds.filter((memberId) => memberId !== req.account.id),
+      updatedApartment.name
+    )
   } catch (err) {
     next(err)
   }
@@ -230,6 +240,8 @@ async function removeMember(
     })
     const memberIds = displayApartment.members.map((member) => member.id)
 
+    const removedMember = displayApartment.members.find((member) => member.id === removedMemberId)
+
     if (!memberIds.includes(removedMemberId)) {
       const errorMessage = `Bad Request: apartment has no member with ID ${removedMemberId}`
       return processClientError(res, 400, errorMessage)
@@ -241,8 +253,13 @@ async function removeMember(
     await accountModel.deleteApartmentId({ id: removedMemberId })
 
     res.status(200).json({
-      msg: `Remove member with id ${removedMemberId}`,
+      msg: `Remove member ${removedMember.username}`,
     })
+
+    await apartmentHelper.notifyAfterRemovingMember(
+      memberIds.filter((memberId) => memberId !== req.account.id),
+      removedMember.username
+    )
   } catch (err) {
     next(err)
   }
