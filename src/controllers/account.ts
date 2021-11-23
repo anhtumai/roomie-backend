@@ -73,7 +73,7 @@ async function login(req: Request, res: Response, next: NextFunction): Promise<v
       account === null ? false : await bcrypt.compare(body.password, account.password)
 
     if (!(account && passwordCorrect)) {
-      const errorMessage = 'Auth error: invalid username or password'
+      const errorMessage = 'Invalid username or password'
       return processClientError(res, 401, errorMessage)
     }
 
@@ -117,8 +117,7 @@ async function create(req: Request, res: Response, next: NextFunction): Promise<
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === 'P2002') {
-        const errorMessage =
-          'ConditionNotMeet error: User with the same username has already existed'
+        const errorMessage = 'User with the same username has already existed'
         return processClientError(res, 400, errorMessage)
       }
     }
@@ -152,8 +151,7 @@ async function update(
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === 'P2002') {
-        const errorMessage =
-          'ConditionNotMeet error: User with the same username has already existed'
+        const errorMessage = 'User with the same username has already existed'
         return processClientError(res, 400, errorMessage)
       }
     }

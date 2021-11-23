@@ -47,7 +47,7 @@ export async function assigneesValidator(
   const assigneeUsernames: string[] = req.body.assignees
 
   if (!req.account.apartment) {
-    const errorMessage = 'ConditionNotMeet error: you must be a member of an apartment'
+    const errorMessage = 'You must be a member of an apartment'
     return processClientError(res, 400, errorMessage)
   }
 
@@ -67,9 +67,7 @@ export async function assigneesValidator(
       (username) => !memberUsernames.includes(username)
     )
     if (incompliantUsernames.length > 0) {
-      const errorMessage =
-        `NotFound error: user(s) ${incompliantUsernames.join()} ` +
-        'are not member of this apartment'
+      const errorMessage = `User(s) ${incompliantUsernames.join()} are not member of this apartment`
       return processClientError(res, 400, errorMessage)
     }
     res.locals.members = members
@@ -353,7 +351,7 @@ async function updateOrder(
       task_id: taskId,
     })
     if (!responseTaskAssignment) {
-      const errorMessage = 'ConditionNotMeet error: Task hasn\'t been assigned to anyones'
+      const errorMessage = 'Task hasn\'t been assigned to anyones'
       return processClientError(res, 400, errorMessage)
     }
     const assigneeUsernames = responseTaskAssignment.assignments.map(

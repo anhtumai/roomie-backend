@@ -12,7 +12,6 @@ import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 
 import { apartmentHelper } from './helper/apartment'
-import apartment from '../models/apartment'
 
 function validateApartmentProperty(apartmentProperty: any): boolean {
   const { name } = apartmentProperty
@@ -43,7 +42,7 @@ export async function adminPermissionValidatorForMeApartment(
   next: NextFunction
 ): Promise<void> {
   if (!req.account.apartment) {
-    const errorMessage = 'Bad Request: You don\'t have an apartment'
+    const errorMessage = 'You don\'t have an apartment'
     return processClientError(res, 400, errorMessage)
   }
 
@@ -110,7 +109,7 @@ async function create(
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === 'P2014') {
-        const errorMessage = 'ConditionNotMeet error: User can only live in 1 apartment'
+        const errorMessage = 'User can only live in 1 apartment'
         return processClientError(res, 400, errorMessage)
       }
     }
@@ -126,7 +125,7 @@ async function update(
   const apartmentId = Number(req.params.id)
 
   if (!validateApartmentProperty(req.body)) {
-    const errorMessage = 'Invalid body'
+    const errorMessage = 'Invalid body: apartment name is missing'
     return processClientError(res, 400, errorMessage)
   }
   const { name } = req.body
@@ -229,8 +228,7 @@ async function removeMember(
   const apartmentId = Number(req.account.apartment.id)
 
   if (removedMemberId === req.account.id) {
-    const errorMessage =
-      'Bad Request: You cannot remove yourself. Please leave the apartment instead.'
+    const errorMessage = 'You cannot remove yourself. Please leave the apartment instead.'
     return processClientError(res, 400, errorMessage)
   }
 
@@ -243,7 +241,7 @@ async function removeMember(
     const removedMember = displayApartment.members.find((member) => member.id === removedMemberId)
 
     if (!memberIds.includes(removedMemberId)) {
-      const errorMessage = `Bad Request: apartment has no member with ID ${removedMemberId}`
+      const errorMessage = `Apartment has no member with ID ${removedMemberId}`
       return processClientError(res, 400, errorMessage)
     }
 

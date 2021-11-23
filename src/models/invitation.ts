@@ -16,7 +16,7 @@ export type PendingInvitation = {
 async function create(
   invitorId: number,
   inviteeId: number,
-  apartmentId: number,
+  apartmentId: number
 ): Promise<PendingInvitation | null> {
   const newInvitation = await prisma.invitation.create({
     data: {

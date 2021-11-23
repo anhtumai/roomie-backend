@@ -29,11 +29,11 @@ function errorHandler(
 
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     logger.error('Prisma error', error)
-    return processClientError(response, 400, 'error when working with database')
+    return processClientError(response, 400, 'Database error')
   } else if (error.name === 'JsonWebTokenError') {
-    return processClientError(response, 401, 'invalid token')
+    return processClientError(response, 401, 'Your token is invalid')
   } else if (error.name === 'TokenExpiredError') {
-    return processClientError(response, 401, 'token expired')
+    return processClientError(response, 401, 'Your token has expired')
   }
   logger.error('Missing err', error)
   next(error)

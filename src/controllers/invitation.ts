@@ -38,16 +38,16 @@ async function create(
   const inviteeUsername = req.body.username
 
   if (!req.body.username) {
-    const errorMessage = 'Invalid body: Invitee username is missing'
+    const errorMessage = 'Invitee username is missing'
     return processClientError(res, 400, errorMessage)
   }
 
   if (inviteeUsername === req.account.username) {
-    const errorMessage = 'Invalid body: You cannot invite yourself'
+    const errorMessage = 'You cannot invite yourself'
     return processClientError(res, 400, errorMessage)
   }
   if (!req.account.apartment) {
-    const errorMessage = 'ConditionNotMeet error: You are not the member of any apartments'
+    const errorMessage = 'You are not the member of any apartments'
     return processClientError(res, 404, errorMessage)
   }
   try {
@@ -55,13 +55,12 @@ async function create(
       username: inviteeUsername,
     })
     if (invitee === null) {
-      const errorMessage = `ConditionNotMeet error: ${inviteeUsername} does not exist`
+      const errorMessage = `User ${inviteeUsername} does not exist`
       return processClientError(res, 404, errorMessage)
     }
 
     if (invitee.apartment !== null) {
-      const errorMessage =
-        `ConditionNotMeet error: ${inviteeUsername} ` + 'is currently member of an apartment'
+      const errorMessage = `User ${inviteeUsername} ` + 'is currently member of an apartment'
       return processClientError(res, 400, errorMessage)
     }
     const newInvitation = await invitationModel.create(
@@ -77,7 +76,7 @@ async function create(
     )
   } catch (err) {
     if (err.code === 'P2002') {
-      const errorMessage = 'Conflict error: You had sent an invitation to this person'
+      const errorMessage = 'You had sent an invitation to this user'
       return processClientError(res, 400, errorMessage)
     }
     next(err)
