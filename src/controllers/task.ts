@@ -3,7 +3,7 @@ import { Request, Response, NextFunction, Router } from 'express'
 import _ from 'lodash'
 
 import taskModel from '../models/task'
-import taskRequestModel from '../models/taskRequest'
+import taskRequestModel, { JoinAssigneeRequest } from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import apartmentModel from '../models/apartment'
 import accountModel, { Profile } from '../models/account'
@@ -12,7 +12,7 @@ import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
 
-import { Prisma, TaskRequest } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 
 function validateTaskProperty(taskProperty: any): boolean {
   const { name, description, frequency, difficulty, start, end } = taskProperty
@@ -153,12 +153,18 @@ export async function membersPermissionValidator(
   }
 }
 
-async function createTaskRequests(assignees: Profile[], taskId: number): Promise<void> {
+async function createTaskRequests(
+  assignees: Profile[],
+  taskId: number
+): Promise<JoinAssigneeRequest[]> {
   const taskRequestCreateData = assignees.map((profile) => ({
     assignee_id: profile.id,
     task_id: taskId,
   }))
   await taskRequestModel.createMany(taskRequestCreateData)
+
+  const taskRequests = await taskRequestModel.findJoinAssigneeRequests({ task_id: taskId })
+  return taskRequests
 }
 
 async function create(
@@ -176,9 +182,9 @@ async function create(
       creator_id: req.account.id,
     })
     const assignees = members.filter((member) => assigneeUsernames.includes(member.username))
-    await createTaskRequests(assignees, createdTask.id)
+    const taskRequests = await createTaskRequests(assignees, createdTask.id)
 
-    res.status(201).json(createdTask)
+    res.status(201).json({ task: createdTask, requests: taskRequests })
 
     const notifiedUsers = assignees.filter((assignee) => assignee.id !== req.account.id)
     pusher.trigger(
@@ -407,8 +413,8 @@ async function updateAssignees(
     await taskAssignmentModel.deleteMany({ task_id: taskId })
 
     const assignees = members.filter((member) => assigneeUsernames.includes(member.username))
-    await createTaskRequests(assignees, taskId)
-    res.status(200).json({ assignees: assigneeUsernames })
+    const taskRequests = await createTaskRequests(assignees, taskId)
+    res.status(200).json({ task: task, requests: taskRequests })
 
     await notifyAfterReAssigning(task.name)
   } catch (err) {

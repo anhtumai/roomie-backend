@@ -3,7 +3,7 @@ import { Profile } from './account'
 
 import { prisma } from './client'
 
-type JoinAssigneeRequest = {
+export type JoinAssigneeRequest = {
   id: number
   state: RequestType
   assignee: Profile
@@ -76,6 +76,26 @@ async function findJoinAssigneeRequest(
     },
   })
   return displayRequest
+}
+
+async function findJoinAssigneeRequests(
+  whereParams: Prisma.TaskRequestWhereInput
+): Promise<JoinAssigneeRequest[]> {
+  const displayRequests = await prisma.taskRequest.findMany({
+    where: whereParams,
+    select: {
+      id: true,
+      state: true,
+      assignee: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+        },
+      },
+    },
+  })
+  return displayRequests
 }
 
 async function findJoinTaskRequests(
@@ -201,6 +221,7 @@ export default {
   findMany,
   findJoinTaskRequests,
   findJoinAssigneeRequest,
+  findJoinAssigneeRequests,
   findResponseTaskRequest,
   findResponseTaskRequests,
   createMany,
