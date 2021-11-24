@@ -373,7 +373,17 @@ async function updateOrder(
       ).id
       await taskAssignmentModel.update({ id: assignmentId }, { order: i })
     }
-    res.status(200).json({ order: usernamesOrder })
+
+    const previousAssignments = responseTaskAssignment.assignments
+    const updatedAssignments = previousAssignments.map((assignment) => {
+      return { ...assignment, order: usernamesOrder.indexOf(assignment.assignee.username) }
+    })
+    res
+      .status(200)
+      .json({
+        ...responseTaskAssignment,
+        assignments: _.sortBy(updatedAssignments, (assignment) => assignment.order),
+      })
     await notifyAfterReorder(responseTaskAssignment.task.name)
   } catch (err) {
     next(err)
