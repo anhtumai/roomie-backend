@@ -34,7 +34,7 @@ async function createTaskAssignments(taskId: number, apartmentId: number): Promi
     const task = await taskModel.find({ id: taskId })
     const allMembers = await accountModel.findMany({ apartment_id: apartmentId })
 
-    pusher.trigger(
+    await pusher.trigger(
       allMembers.map(({ id }) => makeChannel(id)),
       pusherConstant.TASK_EVENT,
       {

@@ -2,6 +2,7 @@ import { PendingInvitation } from '../../models/invitation'
 import accountModel from '../../models/account'
 
 import pusher, { makeChannel, pusherConstant } from '../../pusherConfig'
+import logger from '../../util/logger'
 
 async function notifyAfterCreating(
   invitorUsername: string,
@@ -16,7 +17,7 @@ async function notifyAfterCreating(
       apartment: apartmentName,
     })
   } catch (err) {
-    console.log(err)
+    logger.error(err)
   }
 }
 
@@ -28,7 +29,6 @@ async function notifyAfterAccepting(
 ): Promise<void> {
   try {
     const members = await accountModel.findMany({ apartment_id: apartment.id })
-    console.log(members)
     await pusher.trigger(
       members.map((member) => makeChannel(member.id)),
       pusherConstant.INVITATION_EVENT,
@@ -48,7 +48,7 @@ async function notifyAfterAccepting(
       })
     }
   } catch (err) {
-    console.log(err)
+    logger.error(err)
   }
 }
 
@@ -64,7 +64,7 @@ async function notifyAfterRejecting(
       apartment: invitation.apartment.name,
     })
   } catch (err) {
-    console.log(err)
+    logger.error(err)
   }
 }
 
@@ -81,7 +81,7 @@ async function notifyAfterCancelling(
       apartment: apartmentName,
     })
   } catch (err) {
-    console.log(err)
+    logger.error(err)
   }
 }
 

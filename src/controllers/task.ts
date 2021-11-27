@@ -11,6 +11,7 @@ import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
+import logger from '../util/logger'
 
 import { Prisma } from '@prisma/client'
 
@@ -188,7 +189,7 @@ async function create(
         }
       )
     } catch (err) {
-      console.log(err)
+      logger.error(err)
     }
   }
 
@@ -229,8 +230,8 @@ async function update(
         task: updatedTaskName,
         updater: req.account.username,
       })
-    } catch (error) {
-      console.log(error)
+    } catch (err) {
+      logger.error(err)
     }
   }
 
@@ -272,8 +273,8 @@ async function deleteOne(
         task: deletedTaskName,
         deleter: req.account.username,
       })
-    } catch (error) {
-      console.log(error)
+    } catch (err) {
+      logger.error(err)
     }
   }
 
@@ -355,8 +356,8 @@ async function updateOrder(
         task: reorderTaskName,
         assigner: req.account.username,
       })
-    } catch (error) {
-      console.log(error)
+    } catch (err) {
+      logger.error(err)
     }
   }
 
@@ -415,8 +416,8 @@ async function updateAssignees(
         task: reAssignedTaskName,
         assigner: req.account.username,
       })
-    } catch (error) {
-      console.log(error)
+    } catch (err) {
+      logger.error(err)
     }
   }
 

@@ -3,6 +3,7 @@ import taskAssignmentModel from '../../models/taskAssignment'
 import taskModel from '../../models/task'
 
 import pusher, { makeChannel, pusherConstant } from '../../pusherConfig'
+import logger from '../../util/logger'
 
 async function notifyAfterLeaving(
   memberIds: number[],
@@ -20,7 +21,7 @@ async function notifyAfterLeaving(
       }
     )
   } catch (err) {
-    console.log(err)
+    logger.error(err)
   }
 }
 
@@ -38,7 +39,7 @@ async function notifyAfterRemovingMember(
       }
     )
   } catch (err) {
-    console.log(err)
+    logger.error(err)
   }
 }
 
@@ -53,7 +54,7 @@ async function notifyAfterEditting(memberIds: number[], apartmentName: string): 
       }
     )
   } catch (err) {
-    console.log(err)
+    logger.error(err)
   }
 }
 
