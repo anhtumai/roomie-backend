@@ -172,9 +172,28 @@ async function create(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  const members: Profile[] = res.locals.members
+
+  async function notifyAfterCreating(assigneeUsernames: string[]) {
+    try {
+      const notifiedUsers = members.filter((assignee) => assignee.id !== req.account.id)
+      await pusher.trigger(
+        notifiedUsers.map((user) => makeChannel(user.id)),
+        pusherConstant.TASK_EVENT,
+        {
+          state: pusherConstant.CREATED_STATE,
+          task: taskProperty.name,
+          creator: req.account.username,
+          assignees: assigneeUsernames,
+        }
+      )
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
   const taskProperty = parseTaskProperty(req.body)
   const assigneeUsernames: string[] = req.body.assignees
-  const members: Profile[] = res.locals.members
 
   try {
     const createdTask = await taskModel.create({
@@ -186,16 +205,7 @@ async function create(
 
     res.status(201).json({ task: createdTask, requests: taskRequests })
 
-    const notifiedUsers = assignees.filter((assignee) => assignee.id !== req.account.id)
-    pusher.trigger(
-      notifiedUsers.map((user) => makeChannel(user.id)),
-      pusherConstant.TASK_EVENT,
-      {
-        state: pusherConstant.CREATED_STATE,
-        task: taskProperty.name,
-        creator: req.account.username,
-      }
-    )
+    await notifyAfterCreating(assignees.map((assignee) => assignee.username))
   } catch (err) {
     next(err)
   }
@@ -378,12 +388,10 @@ async function updateOrder(
     const updatedAssignments = previousAssignments.map((assignment) => {
       return { ...assignment, order: usernamesOrder.indexOf(assignment.assignee.username) }
     })
-    res
-      .status(200)
-      .json({
-        ...responseTaskAssignment,
-        assignments: _.sortBy(updatedAssignments, (assignment) => assignment.order),
-      })
+    res.status(200).json({
+      ...responseTaskAssignment,
+      assignments: _.sortBy(updatedAssignments, (assignment) => assignment.order),
+    })
     await notifyAfterReorder(responseTaskAssignment.task.name)
   } catch (err) {
     next(err)
@@ -395,12 +403,11 @@ async function updateAssignees(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  const members: Profile[] = res.locals.members
+
   async function notifyAfterReAssigning(reAssignedTaskName: string) {
     try {
-      const allMembers = await accountModel.findMany({
-        apartment_id: Number(req.account.apartment?.id),
-      })
-      const notifiedChannels = allMembers
+      const notifiedChannels = members
         .filter((member) => member.id !== req.account.id)
         .map((member) => makeChannel(member.id))
       await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
@@ -415,7 +422,6 @@ async function updateAssignees(
 
   const assigneeUsernames: string[] = req.body.assignees
   const taskId = Number(req.params.id)
-  const members: Profile[] = res.locals.members
 
   try {
     const task = await taskModel.find({ id: taskId })
