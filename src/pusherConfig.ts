@@ -1,7 +1,6 @@
 import Pusher from 'pusher'
 
 import dotenv from 'dotenv'
-import apartment from './models/apartment'
 
 dotenv.config()
 
@@ -21,6 +20,7 @@ export const pusherConstant = {
   APARTMENT_EVENT: 'apartment',
   INVITATION_EVENT: 'invitation',
   TASK_EVENT: 'task',
+  TASK_REQUEST_EVENT: 'task_request',
 
   CREATED_STATE: 'CREATED',
   CANCELED_STATE: 'CANCELED',
