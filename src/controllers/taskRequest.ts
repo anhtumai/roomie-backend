@@ -52,11 +52,8 @@ async function notifyAfterUpdatingState(
     notifiedMembers.map(({ id }) => makeChannel(id)),
     pusherConstant.TASK_REQUEST_EVENT,
     {
-      state: pusherConstant.ASSIGNED_STATE,
-      taskRequest: {
-        id: taskRequestId,
-        state: updatedState,
-      },
+      id: taskRequestId,
+      state: updatedState,
     }
   )
 }
