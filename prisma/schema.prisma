@@ -46,7 +46,7 @@ model Invitation {
 	invitor_id	Int
 	invitee		Account		@relation("Invitee", fields: [invitee_id], references: [id])
 	invitee_id	Int
-	apartment	Apartment	@relation(fields: [apartment_id], references: [id])
+	apartment	Apartment	@relation(fields: [apartment_id], references: [id], onDelete: Cascade)
 	apartment_id	Int
 	@@unique(fields: [invitor_id, invitee_id])
 }
