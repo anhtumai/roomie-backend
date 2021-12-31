@@ -10,7 +10,7 @@
     "sourceMap": true,
     "rootDir": "src",
     "outDir": "build",
-    "baseUrl": ".",
+    "baseUrl": "./src",
     "paths": {
       "*": ["node_modules/*", "src/types/*"]
     },
@@ -18,4 +18,3 @@
   },
   "include": ["src/**/*"]
 }
-
