@@ -208,12 +208,17 @@ describe('POST /api/invitations/:id/accept', () => {
       id: testuser1Invitation.id,
     })
     expect(afterAcceptInvitation).toBeNull()
+
+    await api
+      .post(`/api/invitations/${testuser3Invitation.id}/accept`)
+      .set('Authorization', 'Bearer ' + testuser3Token)
+      .expect(200)
   })
   test('all invitations to an invitee will be deleted if he accepts an invitation', async () => {
     const secondTestuser2Invitation = await utils.sendInvitation(
       api,
       testuser1Token,
-      testuser2.username,
+      testuser2.username
     )
     await api
       .post(`/api/invitations/${secondTestuser2Invitation.id}/accept`)
