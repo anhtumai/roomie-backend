@@ -9,7 +9,7 @@ type JoinTaskAssignment = {
   task: Task
 }
 
-type JoinAssigneeAssignment = {
+export type JoinAssigneeAssignment = {
   id: number
   order: number
   assignee: Profile

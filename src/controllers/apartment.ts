@@ -169,8 +169,10 @@ async function deleteOne(
   const id = Number(req.params.id)
 
   try {
+    // query
     const toDeleteApartment = await apartmentModel.findJoinAdminNMembersApartment({ id })
 
+    // mutation
     const taskWhereParams = {
       OR: toDeleteApartment.members.map((member) => ({
         creator_id: member.id,

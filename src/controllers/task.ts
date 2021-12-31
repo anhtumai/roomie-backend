@@ -2,7 +2,7 @@ import { Request, Response, NextFunction, Router } from 'express'
 
 import _ from 'lodash'
 
-import taskModel from '../models/task'
+import taskModel, { updateTaskAssignmentOrders } from '../models/task'
 import taskRequestModel, { JoinAssigneeRequest } from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import apartmentModel from '../models/apartment'
@@ -197,15 +197,18 @@ async function create(
   const assigneeUsernames: string[] = req.body.assignees
 
   try {
+    const assignees = members.filter((member) => assigneeUsernames.includes(member.username))
+
+    // mutation
     const createdTask = await taskModel.create({
       ...taskProperty,
       creator_id: req.account.id,
     })
-    const assignees = members.filter((member) => assigneeUsernames.includes(member.username))
     const taskRequests = await createTaskRequests(assignees, createdTask.id)
 
     res.status(201).json({ task: createdTask, requests: taskRequests })
 
+    // post-response
     await notifyAfterCreating(assignees.map((assignee) => assignee.username))
   } catch (err) {
     next(err)
@@ -244,9 +247,11 @@ async function update(
   const newTaskProperty = parseTaskProperty(req.body)
 
   try {
+    // mutation
     const updatedTask = await taskModel.update({ id: taskId }, newTaskProperty)
     res.status(200).json(updatedTask)
 
+    // post-response
     await notifyAfterUpdating(updatedTask.name)
   } catch (err) {
     next(err)
@@ -279,8 +284,11 @@ async function deleteOne(
   }
 
   try {
+    // mutation
     const deletedTask = await taskModel.deleteOne({ id: taskId })
     res.status(204).json()
+
+    // post-response
     await notifyAfterDeleting(deletedTask.name)
   } catch (err) {
     next(err)
@@ -301,6 +309,8 @@ async function findResponseTask(
       res.status(200).json(responseTaskRequest)
       return
     }
+
+    // query
     const responseTaskAssignment = await taskAssignmentModel.findResponseTaskAssignment({
       task_id: taskId,
     })
@@ -322,6 +332,7 @@ async function findResponseTasks(
   }
   const accountId = req.account.id
   try {
+    // query
     const taskRequests = await taskRequestModel.findJoinTaskRequests({
       assignee_id: accountId,
     })
@@ -364,6 +375,7 @@ async function updateOrder(
   const taskId = Number(req.params.id)
   const usernamesOrder: string[] = req.body.order
   try {
+    // query
     const responseTaskAssignment = await taskAssignmentModel.findResponseTaskAssignment({
       task_id: taskId,
     })
@@ -378,12 +390,9 @@ async function updateOrder(
       const errorMessage = 'Invalid body: Order must contain all member usernames'
       return processClientError(res, 400, errorMessage)
     }
-    for (const [i, username] of usernamesOrder.entries()) {
-      const assignmentId = responseTaskAssignment.assignments.find(
-        (assignment) => assignment.assignee.username === username
-      ).id
-      await taskAssignmentModel.update({ id: assignmentId }, { order: i })
-    }
+
+    // mutation
+    await updateTaskAssignmentOrders(usernamesOrder, responseTaskAssignment.assignments)
 
     const previousAssignments = responseTaskAssignment.assignments
     const updatedAssignments = previousAssignments.map((assignment) => {
@@ -393,6 +402,8 @@ async function updateOrder(
       ...responseTaskAssignment,
       assignments: _.sortBy(updatedAssignments, (assignment) => assignment.order),
     })
+
+    // post-response
     await notifyAfterReorder(responseTaskAssignment.task.name)
   } catch (err) {
     next(err)

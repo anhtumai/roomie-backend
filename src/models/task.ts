@@ -1,5 +1,6 @@
 import { Task, Prisma } from '@prisma/client'
 import { prisma } from './client'
+import { JoinAssigneeAssignment } from './taskAssignment'
 
 type JoinCreatorTask = {
   creator: {
@@ -22,7 +23,7 @@ async function find(whereParams: Prisma.TaskWhereUniqueInput): Promise<Task | nu
 }
 
 async function findJoinCreatorApartment(
-  whereParams: Prisma.TaskWhereUniqueInput,
+  whereParams: Prisma.TaskWhereUniqueInput
 ): Promise<JoinCreatorTask | null> {
   const task = await prisma.task.findUnique({
     where: whereParams,
@@ -46,7 +47,7 @@ async function findMany(whereParams: Prisma.TaskWhereInput): Promise<Task[]> {
 
 async function update(
   whereParams: Prisma.TaskWhereUniqueInput,
-  dataParams: Prisma.TaskUncheckedUpdateInput,
+  dataParams: Prisma.TaskUncheckedUpdateInput
 ): Promise<Task> {
   const updatedTask = await prisma.task.update({
     where: whereParams,
@@ -73,6 +74,26 @@ async function deleteMany(whereParams: Prisma.TaskWhereInput): Promise<number> {
 async function deleteAll(): Promise<number> {
   const count = await deleteMany({})
   return count
+}
+
+export async function updateTaskAssignmentOrders(
+  usernamesOrder: string[],
+  joinAssigneeAssignments: JoinAssigneeAssignment[]
+): Promise<void> {
+  await prisma.$transaction(
+    usernamesOrder.map((username, i) =>
+      prisma.taskAssignment.update({
+        where: {
+          id: joinAssigneeAssignments.find(
+            (assignment) => assignment.assignee.username === username
+          ).id,
+        },
+        data: {
+          order: i,
+        },
+      })
+    )
+  )
 }
 
 export default {
