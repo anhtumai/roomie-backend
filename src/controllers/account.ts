@@ -16,23 +16,27 @@ type UpdateAccountProperty = {
   password?: string
 }
 
-function isCreateAccountPropertyValid(accountProperty: any): boolean {
-  const { name, username, password } = accountProperty
-  if (typeof username !== 'string' || typeof name !== 'string' || typeof password !== 'string')
-    return false
-  if (username.length < 5 || name.length < 10 || password.length < 10) return false
-  return true
+function validateCreateAccountProperty(accountProperty: any): Joi.ValidationError | undefined {
+  const schema = Joi.object({
+    username: Joi.string().min(5).required(),
+    name: Joi.string().min(10).required(),
+    password: Joi.string().min(10).required(),
+  })
+  const validationResult = schema.validate(accountProperty)
+  return validationResult.error
 }
 
-function isUpdateAccountPropertyValid(updateAccountProperty: any): boolean {
+function validateUpdateAccountProperty(
+  updateAccountProperty: any
+): Joi.ValidationError | undefined {
   const schema = Joi.object({
     username: Joi.string().min(5),
     name: Joi.string().min(10),
     password: Joi.string().min(10),
   }).min(1)
 
-  const validatedObject = schema.validate(updateAccountProperty)
-  return validatedObject.error === undefined
+  const validationResult = schema.validate(updateAccountProperty)
+  return validationResult.error
 }
 
 async function parseUpdateAccountProperty(
@@ -103,15 +107,17 @@ async function login(req: Request, res: Response, next: NextFunction): Promise<v
 async function create(req: Request, res: Response, next: NextFunction): Promise<void> {
   const body = req.body
 
-  if (!isCreateAccountPropertyValid(req.body)) {
-    const errorMessage = 'Invalid body'
-    return processClientError(res, 400, errorMessage)
+  const error = validateCreateAccountProperty(body)
+
+  if (error) {
+    return processClientError(res, 400, error.message)
   }
 
   const saltRounds = 10
   const passwordHash = await bcrypt.hash(body.password, saltRounds)
 
   try {
+    // mutation
     const newAccount = await accountModel.create(body.username, body.name, passwordHash)
     res.status(201).json(newAccount)
   } catch (err) {
@@ -137,13 +143,17 @@ async function update(
     const errorMessage = 'Forbidden error'
     return processClientError(res, 403, errorMessage)
   }
-  if (!isUpdateAccountPropertyValid(req.body)) {
-    const errorMessage = 'Invalid body'
-    return processClientError(res, 400, errorMessage)
+
+  const error = validateUpdateAccountProperty(req.body)
+  if (error) {
+    return processClientError(res, 400, error.message)
   }
 
   try {
+    // query
     const updateAccountProperty = await parseUpdateAccountProperty(body)
+
+    // mutation
     const updatedAccount = await accountModel.update({ id: accountId }, updateAccountProperty)
 
     const { id, name, username } = updatedAccount
