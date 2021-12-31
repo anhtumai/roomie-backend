@@ -85,6 +85,31 @@ async function deleteAll(): Promise<void> {
   await prisma.apartment.deleteMany({})
 }
 
+export async function createApartmentAndDeletePendingInvitations(
+  apartmentName: string,
+  creatorId: number
+): Promise<number> {
+  const [updatedAccount, _] = await prisma.$transaction([
+    prisma.account.update({
+      where: { id: creatorId },
+      data: {
+        apartment: {
+          create: {
+            name: apartmentName,
+            admin_id: creatorId,
+          },
+        },
+      },
+    }),
+    prisma.invitation.deleteMany({
+      where: {
+        invitee_id: creatorId,
+      },
+    }),
+  ])
+  return updatedAccount.apartment_id
+}
+
 export default {
   find,
   findJoinAdminNMembersApartment,

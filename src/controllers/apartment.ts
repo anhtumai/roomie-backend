@@ -2,8 +2,10 @@ import { Response, NextFunction } from 'express'
 import { Prisma } from '@prisma/client'
 
 import apartmentModel from '../models/apartment'
+import { createApartmentAndDeletePendingInvitations } from '../models/apartment'
+
 import accountModel from '../models/account'
-import invitationModel from '../models/invitation'
+
 import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import taskModel from '../models/task'
@@ -102,9 +104,17 @@ async function create(
     return processClientError(res, 400, errorMessage)
   }
   try {
-    const newApartment = await apartmentModel.create(req.body.name, req.account.id)
-    await accountModel.update({ id: req.account.id }, { apartment_id: newApartment.id })
-    await invitationModel.deleteMany({ invitee_id: req.account.id })
+    // mutation
+    const apartmentId = await createApartmentAndDeletePendingInvitations(
+      req.body.name,
+      req.account.id
+    )
+
+    const newApartment = {
+      id: apartmentId,
+      name: req.body.name,
+      admin_id: req.account.id,
+    }
     res.status(201).json(newApartment)
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
