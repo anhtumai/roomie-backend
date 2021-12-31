@@ -73,6 +73,7 @@ async function updateState(
   }
 
   try {
+    // query
     const taskRequest = await taskRequestModel.findJoinAssigneeRequest({
       id: taskRequestId,
     })
@@ -80,6 +81,8 @@ async function updateState(
       const errorMessage = 'Forbidden error'
       return processClientError(res, 403, errorMessage)
     }
+
+    // mutation
     const updatedTaskRequest = await taskRequestModel.update(
       { id: taskRequestId },
       { state: newState }
@@ -87,6 +90,7 @@ async function updateState(
     res.status(200).json({ msg: `Task request id ${taskRequestId} is now ${newState}` })
 
     try {
+      // query
       const taskId = updatedTaskRequest.task_id
       const taskRequests = await taskRequestModel.findMany({ task_id: taskId })
       const requestStates = taskRequests.map((taskRequest) => taskRequest.state)
@@ -101,6 +105,7 @@ async function updateState(
       })
 
       if (requestStates.every((state) => state === 'accepted')) {
+        // mutation
         await createTaskAssignments(taskRequests, taskId, allMembers)
       } else {
         await notifyAfterUpdatingState(
