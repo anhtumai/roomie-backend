@@ -2,7 +2,7 @@ import { Request, Response, NextFunction, Router } from 'express'
 
 import _ from 'lodash'
 
-import taskModel, { updateTaskAssignmentOrders } from '../models/task'
+import taskModel, { updateTaskAssignees, updateTaskAssignmentOrders } from '../models/task'
 import taskRequestModel, { JoinAssigneeRequest } from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import apartmentModel from '../models/apartment'
@@ -436,14 +436,20 @@ async function updateAssignees(
   const taskId = Number(req.params.id)
 
   try {
+    // query
     const task = await taskModel.find({ id: taskId })
-    await taskRequestModel.deleteMany({ task_id: taskId })
-    await taskAssignmentModel.deleteMany({ task_id: taskId })
 
     const assignees = members.filter((member) => assigneeUsernames.includes(member.username))
-    const taskRequests = await createTaskRequests(assignees, taskId)
+
+    // mutation
+    await updateTaskAssignees(taskId, assignees)
+
+    // query
+    const taskRequests = await taskRequestModel.findJoinAssigneeRequests({ task_id: taskId })
+
     res.status(200).json({ task: task, requests: taskRequests })
 
+    // post-response
     await notifyAfterReAssigning(task.name)
   } catch (err) {
     next(err)

@@ -1,6 +1,7 @@
 import { Task, Prisma } from '@prisma/client'
 import { prisma } from './client'
 import { JoinAssigneeAssignment } from './taskAssignment'
+import { Profile } from './account'
 
 type JoinCreatorTask = {
   creator: {
@@ -94,6 +95,25 @@ export async function updateTaskAssignmentOrders(
       })
     )
   )
+}
+
+/**
+ *
+ *
+ */
+export async function updateTaskAssignees(taskId: number, assignees: Profile[]): Promise<void> {
+  const taskRequestCreateData = assignees.map((profile) => ({
+    assignee_id: profile.id,
+    task_id: taskId,
+  }))
+
+  await prisma.$transaction([
+    prisma.taskRequest.deleteMany({ where: { task_id: taskId } }),
+    prisma.taskAssignment.deleteMany({ where: { task_id: taskId } }),
+    prisma.taskRequest.createMany({
+      data: taskRequestCreateData,
+    }),
+  ])
 }
 
 export default {
