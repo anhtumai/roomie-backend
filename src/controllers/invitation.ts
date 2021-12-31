@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express'
 
 import accountModel from '../models/account'
 import invitationModel from '../models/invitation'
+import { acceptInvitation } from '../models/invitation'
 
 import processClientError from '../util/error'
 
@@ -126,21 +127,18 @@ async function accept(
       return processClientError(res, 403, errorMessage)
     }
 
-    const whereParams = { id: req.account.id }
-    const dataParams = { apartment_id: invitation.apartment.id }
-    await accountModel.update(whereParams, dataParams)
-
-    const toRejectInvitations = (
-      await invitationModel.findMany({ invitor_id: req.account.id })
-    ).filter((i) => i.id !== invitation.id)
-
-    await invitationModel.deleteMany({ invitee_id: req.account.id })
+    await acceptInvitation(req.account.id, invitation.apartment.id)
 
     res.status(200).json({
       msg:
         `Accept invitation to ${invitation.apartment.name} ` +
         `from ${invitation.invitor.username}`,
     })
+
+    const toRejectInvitations = (
+      await invitationModel.findMany({ invitor_id: req.account.id })
+    ).filter((i) => i.id !== invitation.id)
+
     await invitationHelper.notifyAfterAccepting(
       invitation.apartment,
       invitation.invitor.username,
@@ -168,7 +166,7 @@ async function deleteOne(
       return processClientError(res, 403, errorMessage)
     }
 
-    await invitationModel.deleteMany({ id: invitationId })
+    await invitationModel.deleteOne({ id: invitationId })
 
     res.status(204).json()
     await invitationHelper.notifyAfterCancelling(

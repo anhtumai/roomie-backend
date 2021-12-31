@@ -132,6 +132,20 @@ async function deleteAll(): Promise<void> {
   await prisma.invitation.deleteMany({})
 }
 
+export async function acceptInvitation(accepterId: number, apartmentId: number): Promise<void> {
+  await prisma.$transaction([
+    prisma.account.update({
+      where: { id: accepterId },
+      data: { apartment_id: apartmentId },
+    }),
+    prisma.invitation.deleteMany({
+      where: {
+        invitee_id: accepterId,
+      },
+    }),
+  ])
+}
+
 export default {
   create,
   find,

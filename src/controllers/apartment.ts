@@ -76,6 +76,7 @@ async function findJoinTasksApartment(
   try {
     const apartmentId = apartment.id
 
+    // query
     const displayApartment = await apartmentModel.findJoinAdminNMembersApartment({
       id: apartmentId,
     })
@@ -140,12 +141,16 @@ async function update(
   }
   const { name } = req.body
   try {
+    // mutation
     const updatedApartment = await apartmentModel.update({ id: apartmentId }, { name })
+
+    // query after mutation
     const displayApartment = await apartmentModel.findJoinAdminNMembersApartment({
       id: apartmentId,
     })
     res.status(200).json(updatedApartment)
 
+    // post response
     const memberIds = displayApartment.members.map((member) => member.id)
     await apartmentHelper.notifyAfterEditting(
       memberIds.filter((memberId) => memberId !== req.account.id),
