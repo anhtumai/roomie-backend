@@ -2,62 +2,6 @@ import taskRequestModel from '../../models/taskRequest'
 import taskAssignmentModel from '../../models/taskAssignment'
 import taskModel from '../../models/task'
 
-import pusher, { makeChannel, pusherConstant } from '../../pusherConfig'
-import logger from '../../util/logger'
-
-async function notifyAfterLeaving(
-  memberIds: number[],
-  leaverUsername: string,
-  currentAdminUsername: string
-): Promise<void> {
-  try {
-    await pusher.trigger(
-      memberIds.map((memberId) => makeChannel(memberId)),
-      pusherConstant.APARTMENT_EVENT,
-      {
-        state: pusherConstant.LEAVE_STATE,
-        leaver: leaverUsername,
-        admin: currentAdminUsername,
-      }
-    )
-  } catch (err) {
-    logger.error(err)
-  }
-}
-
-async function notifyAfterRemovingMember(
-  memberIds: number[],
-  removedMemberUsername: string
-): Promise<void> {
-  try {
-    await pusher.trigger(
-      memberIds.map((memberId) => makeChannel(memberId)),
-      pusherConstant.APARTMENT_EVENT,
-      {
-        state: pusherConstant.MEMBER_REMOVED_STATE,
-        removedMember: removedMemberUsername,
-      }
-    )
-  } catch (err) {
-    logger.error(err)
-  }
-}
-
-async function notifyAfterEditting(memberIds: number[], apartmentName: string): Promise<void> {
-  try {
-    await pusher.trigger(
-      memberIds.map((memberId) => makeChannel(memberId)),
-      pusherConstant.APARTMENT_EVENT,
-      {
-        state: pusherConstant.EDITED_STATE,
-        apartmentName: apartmentName,
-      }
-    )
-  } catch (err) {
-    logger.error(err)
-  }
-}
-
 async function cleanTaskRequests(memberIds: number[], leaverId: number): Promise<void> {
   const responseTaskRequests = await taskRequestModel.findResponseTaskRequests(memberIds)
 
@@ -98,9 +42,6 @@ async function cleanTaskAssignments(memberIds: number[], leaverId: number): Prom
 }
 
 export const apartmentHelper = {
-  notifyAfterLeaving,
-  notifyAfterRemovingMember,
-  notifyAfterEditting,
   cleanTaskRequests,
   cleanTaskAssignments,
 }

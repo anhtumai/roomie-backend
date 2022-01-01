@@ -8,10 +8,11 @@ import taskAssignmentModel from '../models/taskAssignment'
 import taskModel from '../models/task'
 import accountModel, { Profile } from '../models/account'
 
-import processClientError from '../util/error'
-import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
-import logger from '../util/logger'
+import taskRequestPusher from '../pusher/taskRequest'
+
 import { RequestAfterExtractor } from '../types/express-middleware'
+import processClientError from '../util/error'
+import logger from '../util/logger'
 
 async function createTaskAssignments(
   taskRequests: TaskRequest[],
@@ -28,33 +29,14 @@ async function createTaskAssignments(
   await taskRequestModel.deleteMany({ task_id: taskId })
 
   const task = await taskModel.find({ id: taskId })
-
-  await pusher.trigger(
-    allMembers.map(({ id }) => makeChannel(id)),
-    pusherConstant.TASK_EVENT,
-    {
-      state: pusherConstant.ASSIGNED_STATE,
-      task: task?.name,
-      assignees: assignmentCreateData.map(({ assignee_id }) => {
-        const assignee = allMembers.find((member) => member.id === assignee_id)
-        return assignee?.username
-      }),
-    }
-  )
-}
-
-async function notifyAfterUpdatingState(
-  taskRequestId: number,
-  updatedState: 'pending' | 'accepted' | 'rejected',
-  notifiedMembers: Profile[]
-) {
-  await pusher.trigger(
-    notifiedMembers.map(({ id }) => makeChannel(id)),
-    pusherConstant.TASK_REQUEST_EVENT,
-    {
-      id: taskRequestId,
-      state: updatedState,
-    }
+  const assigneeUsernames = assignmentCreateData.map(({ assignee_id }) => {
+    const assignee = allMembers.find((member) => member.id === assignee_id)
+    return assignee?.username
+  })
+  await taskRequestPusher.notifyAfterChangingToTaskAssignment(
+    allMembers,
+    task.name,
+    assigneeUsernames
   )
 }
 
@@ -108,7 +90,7 @@ async function updateState(
         // mutation
         await createTaskAssignments(taskRequests, taskId, allMembers)
       } else {
-        await notifyAfterUpdatingState(
+        await taskRequestPusher.notifyAfterUpdatingState(
           taskRequestId,
           newState,
           allMembers.filter((member) => member.id !== req.account.id)

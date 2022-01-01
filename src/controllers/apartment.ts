@@ -1,14 +1,13 @@
 import { Response, NextFunction } from 'express'
 import { Prisma } from '@prisma/client'
 
-import apartmentModel from '../models/apartment'
-import { createApartmentAndDeletePendingInvitations } from '../models/apartment'
-
+import apartmentModel, { createApartmentAndDeletePendingInvitations } from '../models/apartment'
 import accountModel from '../models/account'
-
 import taskRequestModel from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import taskModel from '../models/task'
+
+import apartmentPusher from '../pusher/apartment'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
@@ -152,7 +151,7 @@ async function update(
 
     // post response
     const memberIds = displayApartment.members.map((member) => member.id)
-    await apartmentHelper.notifyAfterEditting(
+    await apartmentPusher.notifyAfterUpdating(
       memberIds.filter((memberId) => memberId !== req.account.id),
       updatedApartment.name
     )
@@ -226,7 +225,7 @@ async function leave(req: RequestAfterExtractor, res: Response, next: NextFuncti
       msg: `Leave the aparment ${req.account.apartment.name}`,
     })
 
-    await apartmentHelper.notifyAfterLeaving(
+    await apartmentPusher.notifyAfterLeaving(
       memberIds.filter((memberId) => memberId !== req.account.id),
       req.account.username,
       currentAdminUsername
@@ -271,7 +270,7 @@ async function removeMember(
       msg: `Remove member ${removedMember.username}`,
     })
 
-    await apartmentHelper.notifyAfterRemovingMember(
+    await apartmentPusher.notifyAfterRemovingMember(
       memberIds.filter((memberId) => memberId !== req.account.id),
       removedMember.username
     )

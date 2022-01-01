@@ -1,8 +1,8 @@
-import { PendingInvitation } from '../../models/invitation'
-import accountModel from '../../models/account'
+import { PendingInvitation } from '../models/invitation'
+import accountModel from '../models/account'
 
-import pusher, { makeChannel, pusherConstant } from '../../pusherConfig'
-import logger from '../../util/logger'
+import pusher, { makeChannel, pusherConstant } from './config'
+import logger from '../util/logger'
 
 async function notifyAfterCreating(
   invitorUsername: string,
@@ -85,7 +85,7 @@ async function notifyAfterCancelling(
   }
 }
 
-export const invitationHelper = {
+export default {
   notifyAfterCreating,
   notifyAfterAccepting,
   notifyAfterRejecting,

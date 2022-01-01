@@ -8,7 +8,7 @@ import processClientError from '../util/error'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 
-import { invitationHelper } from './helper/invitation'
+import invitationPusher from '../pusher/invitation'
 
 async function findMany(
   req: RequestAfterExtractor,
@@ -70,7 +70,7 @@ async function create(
       req.account.apartment.id
     )
     res.status(201).json(newInvitation)
-    await invitationHelper.notifyAfterCreating(
+    await invitationPusher.notifyAfterCreating(
       req.account.username,
       invitee,
       req.account.apartment.name
@@ -105,7 +105,7 @@ async function reject(
         `Reject invitation to ${invitation.apartment.name} ` +
         `from ${invitation.invitor.username}`,
     })
-    await invitationHelper.notifyAfterRejecting(invitation, req.account.username)
+    await invitationPusher.notifyAfterRejecting(invitation, req.account.username)
   } catch (err) {
     next(err)
   }
@@ -139,7 +139,7 @@ async function accept(
       await invitationModel.findMany({ invitor_id: req.account.id })
     ).filter((i) => i.id !== invitation.id)
 
-    await invitationHelper.notifyAfterAccepting(
+    await invitationPusher.notifyAfterAccepting(
       invitation.apartment,
       invitation.invitor.username,
       req.account.username,
@@ -169,7 +169,7 @@ async function deleteOne(
     await invitationModel.deleteOne({ id: invitationId })
 
     res.status(204).json()
-    await invitationHelper.notifyAfterCancelling(
+    await invitationPusher.notifyAfterCancelling(
       invitation,
       req.account.username,
       req.account.apartment.name

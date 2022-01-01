@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, Router } from 'express'
+import { Request, Response, NextFunction } from 'express'
 
 import _ from 'lodash'
 
@@ -6,12 +6,12 @@ import taskModel, { updateTaskAssignees, updateTaskAssignmentOrders } from '../m
 import taskRequestModel, { JoinAssigneeRequest } from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import apartmentModel from '../models/apartment'
-import accountModel, { Profile } from '../models/account'
-import pusher, { makeChannel, pusherConstant } from '../pusherConfig'
+import { Profile } from '../models/account'
+
+import taskPusher from '../pusher/task'
 
 import { RequestAfterExtractor } from '../types/express-middleware'
 import processClientError from '../util/error'
-import logger from '../util/logger'
 
 import { Prisma } from '@prisma/client'
 
@@ -175,24 +175,6 @@ async function create(
 ): Promise<void> {
   const members: Profile[] = res.locals.members
 
-  async function notifyAfterCreating(assigneeUsernames: string[]) {
-    try {
-      const notifiedUsers = members.filter((assignee) => assignee.id !== req.account.id)
-      await pusher.trigger(
-        notifiedUsers.map((user) => makeChannel(user.id)),
-        pusherConstant.TASK_EVENT,
-        {
-          state: pusherConstant.CREATED_STATE,
-          task: taskProperty.name,
-          creator: req.account.username,
-          assignees: assigneeUsernames,
-        }
-      )
-    } catch (err) {
-      logger.error(err)
-    }
-  }
-
   const taskProperty = parseTaskProperty(req.body)
   const assigneeUsernames: string[] = req.body.assignees
 
@@ -209,7 +191,7 @@ async function create(
     res.status(201).json({ task: createdTask, requests: taskRequests })
 
     // post-response
-    await notifyAfterCreating(assignees.map((assignee) => assignee.username))
+    await taskPusher.notifyAfterCreating(members, createdTask.name, req.account, assigneeUsernames)
   } catch (err) {
     next(err)
   }
@@ -220,24 +202,6 @@ async function update(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  async function notifyAfterUpdating(updatedTaskName: string) {
-    try {
-      const allMembers = await accountModel.findMany({
-        apartment_id: Number(req.account.apartment?.id),
-      })
-      const notifiedChannels = allMembers
-        .filter((member) => member.id !== req.account.id)
-        .map((member) => makeChannel(member.id))
-      await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
-        state: pusherConstant.EDITED_STATE,
-        task: updatedTaskName,
-        updater: req.account.username,
-      })
-    } catch (err) {
-      logger.error(err)
-    }
-  }
-
   const taskId = Number(req.params.id)
 
   if (!validateTaskProperty(req.body)) {
@@ -252,7 +216,7 @@ async function update(
     res.status(200).json(updatedTask)
 
     // post-response
-    await notifyAfterUpdating(updatedTask.name)
+    await taskPusher.notifyAfterUpdating(updatedTask.name, req.account)
   } catch (err) {
     next(err)
   }
@@ -265,31 +229,13 @@ async function deleteOne(
 ): Promise<void> {
   const taskId = Number(req.params.id)
 
-  async function notifyAfterDeleting(deletedTaskName: string) {
-    try {
-      const allMembers = await accountModel.findMany({
-        apartment_id: Number(req.account.apartment?.id),
-      })
-      const notifiedChannels = allMembers
-        .filter((member) => member.id !== req.account.id)
-        .map((member) => makeChannel(member.id))
-      await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
-        state: pusherConstant.DELETED_STATE,
-        task: deletedTaskName,
-        deleter: req.account.username,
-      })
-    } catch (err) {
-      logger.error(err)
-    }
-  }
-
   try {
     // mutation
     const deletedTask = await taskModel.deleteOne({ id: taskId })
     res.status(204).json()
 
     // post-response
-    await notifyAfterDeleting(deletedTask.name)
+    await taskPusher.notifyAfterDeleting(deletedTask.name, req.account)
   } catch (err) {
     next(err)
   }
@@ -354,24 +300,6 @@ async function updateOrder(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  async function notifyAfterReorder(reorderTaskName: string) {
-    try {
-      const allMembers = await accountModel.findMany({
-        apartment_id: Number(req.account.apartment?.id),
-      })
-      const notifiedChannels = allMembers
-        .filter((member) => member.id !== req.account.id)
-        .map((member) => makeChannel(member.id))
-      await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
-        state: pusherConstant.REORDERED_STATE,
-        task: reorderTaskName,
-        assigner: req.account.username,
-      })
-    } catch (err) {
-      logger.error(err)
-    }
-  }
-
   const taskId = Number(req.params.id)
   const usernamesOrder: string[] = req.body.order
   try {
@@ -404,7 +332,7 @@ async function updateOrder(
     })
 
     // post-response
-    await notifyAfterReorder(responseTaskAssignment.task.name)
+    await taskPusher.notifyAfterReorder(responseTaskAssignment.task.name, req.account)
   } catch (err) {
     next(err)
   }
@@ -416,21 +344,6 @@ async function updateAssignees(
   next: NextFunction
 ): Promise<void> {
   const members: Profile[] = res.locals.members
-
-  async function notifyAfterReAssigning(reAssignedTaskName: string) {
-    try {
-      const notifiedChannels = members
-        .filter((member) => member.id !== req.account.id)
-        .map((member) => makeChannel(member.id))
-      await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
-        state: pusherConstant.REASSIGNED_STATE,
-        task: reAssignedTaskName,
-        assigner: req.account.username,
-      })
-    } catch (err) {
-      logger.error(err)
-    }
-  }
 
   const assigneeUsernames: string[] = req.body.assignees
   const taskId = Number(req.params.id)
@@ -450,7 +363,7 @@ async function updateAssignees(
     res.status(200).json({ task: task, requests: taskRequests })
 
     // post-response
-    await notifyAfterReAssigning(task.name)
+    await taskPusher.notifyAfterReAssigning(members, task.name, req.account)
   } catch (err) {
     next(err)
   }
