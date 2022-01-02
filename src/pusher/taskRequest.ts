@@ -3,18 +3,21 @@ import { Profile } from '../models/account'
 import pusher, { makeChannel, pusherConstant } from './config'
 
 async function notifyAfterUpdatingState(
+  members: Profile[],
   taskRequestId: number,
   updatedState: 'pending' | 'accepted' | 'rejected',
-  notifiedMembers: Profile[]
+  updater: {
+    id: number
+  }
 ): Promise<void> {
-  await pusher.trigger(
-    notifiedMembers.map(({ id }) => makeChannel(id)),
-    pusherConstant.TASK_REQUEST_EVENT,
-    {
-      id: taskRequestId,
-      state: updatedState,
-    }
-  )
+  const notifiedChannels = members
+    .filter((member) => member.id !== updater.id)
+    .map((member) => makeChannel(member.id))
+
+  await pusher.trigger(notifiedChannels, pusherConstant.TASK_REQUEST_EVENT, {
+    id: taskRequestId,
+    state: updatedState,
+  })
 }
 
 async function notifyAfterChangingToTaskAssignment(
@@ -22,15 +25,13 @@ async function notifyAfterChangingToTaskAssignment(
   taskName: string,
   assigneeUsernames: string[]
 ): Promise<void> {
-  await pusher.trigger(
-    members.map(({ id }) => makeChannel(id)),
-    pusherConstant.TASK_EVENT,
-    {
-      state: pusherConstant.ASSIGNED_STATE,
-      task: taskName,
-      assignees: assigneeUsernames,
-    }
-  )
+  const notifiedChannels = members.map((member) => makeChannel(member.id))
+
+  await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
+    state: pusherConstant.ASSIGNED_STATE,
+    task: taskName,
+    assignees: assigneeUsernames,
+  })
 }
 
 export default {

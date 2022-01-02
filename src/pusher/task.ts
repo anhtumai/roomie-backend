@@ -12,17 +12,16 @@ async function notifyAfterCreating(
   assigneeUsernames: string[]
 ): Promise<void> {
   try {
-    const notifiedUsers = members.filter((assignee) => assignee.id !== creator.id)
-    await pusher.trigger(
-      notifiedUsers.map((user) => makeChannel(user.id)),
-      pusherConstant.TASK_EVENT,
-      {
-        state: pusherConstant.CREATED_STATE,
-        task: taskName,
-        creator: creator.username,
-        assignees: assigneeUsernames,
-      }
-    )
+    const notifiedChannels = members
+      .filter((assignee) => assignee.id !== creator.id)
+      .map((member) => makeChannel(member.id))
+
+    await pusher.trigger(notifiedChannels, pusherConstant.TASK_EVENT, {
+      state: pusherConstant.CREATED_STATE,
+      task: taskName,
+      creator: creator.username,
+      assignees: assigneeUsernames,
+    })
   } catch (err) {
     logger.error(err)
   }

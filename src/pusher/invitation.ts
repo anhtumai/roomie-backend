@@ -10,7 +10,8 @@ async function notifyAfterCreating(
   apartmentName: string
 ): Promise<void> {
   try {
-    await pusher.trigger(makeChannel(invitee.id), pusherConstant.INVITATION_EVENT, {
+    const notifiedChannel = makeChannel(invitee.id)
+    await pusher.trigger(notifiedChannel, pusherConstant.INVITATION_EVENT, {
       state: pusherConstant.CREATED_STATE,
       invitor: invitorUsername,
       invitee: invitee.username,
@@ -22,25 +23,23 @@ async function notifyAfterCreating(
 }
 
 async function notifyAfterAccepting(
-  apartment: { id: number; name: string },
   invitorUsername: string,
   inviteeUsername: string,
+  apartment: { id: number; name: string },
   toRejectInvitations: PendingInvitation[]
 ): Promise<void> {
   try {
     const members = await accountModel.findMany({ apartment_id: apartment.id })
-    await pusher.trigger(
-      members.map((member) => makeChannel(member.id)),
-      pusherConstant.INVITATION_EVENT,
-      {
-        state: pusherConstant.ACCEPTED_STATE,
-        invitor: invitorUsername,
-        invitee: inviteeUsername,
-        apartment: apartment.name,
-      }
-    )
+    const notifiedChannels = members.map((member) => makeChannel(member.id))
+    await pusher.trigger(notifiedChannels, pusherConstant.INVITATION_EVENT, {
+      state: pusherConstant.ACCEPTED_STATE,
+      invitor: invitorUsername,
+      invitee: inviteeUsername,
+      apartment: apartment.name,
+    })
     for (const invitation of toRejectInvitations) {
-      await pusher.trigger(makeChannel(invitation.invitor.id), pusherConstant.INVITATION_EVENT, {
+      const notifiedChannel = makeChannel(invitation.invitor.id)
+      await pusher.trigger(notifiedChannel, pusherConstant.INVITATION_EVENT, {
         state: pusherConstant.REJECTED_STATE,
         invitor: invitation.invitor.username,
         invitee: invitorUsername,
@@ -57,7 +56,8 @@ async function notifyAfterRejecting(
   inviteeUsername: string
 ): Promise<void> {
   try {
-    await pusher.trigger(makeChannel(invitation.invitor.id), pusherConstant.INVITATION_EVENT, {
+    const notifiedChannel = makeChannel(invitation.invitor.id)
+    await pusher.trigger(notifiedChannel, pusherConstant.INVITATION_EVENT, {
       state: pusherConstant.REJECTED_STATE,
       invitor: invitation.invitor.username,
       invitee: inviteeUsername,
@@ -74,7 +74,8 @@ async function notifyAfterCancelling(
   apartmentName: string
 ): Promise<void> {
   try {
-    await pusher.trigger(makeChannel(invitation.invitee.id), 'invitation', {
+    const notifiedChannel = makeChannel(invitation.invitee.id)
+    await pusher.trigger(notifiedChannel, pusherConstant.INVITATION_EVENT, {
       state: pusherConstant.CANCELED_STATE,
       invitor: invitorUsername,
       invitee: invitation.invitee.username,

@@ -153,7 +153,8 @@ async function update(
     const memberIds = displayApartment.members.map((member) => member.id)
     await apartmentPusher.notifyAfterUpdating(
       memberIds.filter((memberId) => memberId !== req.account.id),
-      updatedApartment.name
+      updatedApartment.name,
+      req.account
     )
   } catch (err) {
     next(err)
@@ -225,11 +226,7 @@ async function leave(req: RequestAfterExtractor, res: Response, next: NextFuncti
       msg: `Leave the aparment ${req.account.apartment.name}`,
     })
 
-    await apartmentPusher.notifyAfterLeaving(
-      memberIds.filter((memberId) => memberId !== req.account.id),
-      req.account.username,
-      currentAdminUsername
-    )
+    await apartmentPusher.notifyAfterLeaving(memberIds, req.account, currentAdminUsername)
   } catch (err) {
     next(err)
   }
@@ -272,7 +269,8 @@ async function removeMember(
 
     await apartmentPusher.notifyAfterRemovingMember(
       memberIds.filter((memberId) => memberId !== req.account.id),
-      removedMember.username
+      removedMember.username,
+      req.account
     )
   } catch (err) {
     next(err)

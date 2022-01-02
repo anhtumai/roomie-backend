@@ -71,6 +71,7 @@ async function updateState(
     )
     res.status(200).json({ msg: `Task request id ${taskRequestId} is now ${newState}` })
 
+    // post response
     try {
       // query
       const taskId = updatedTaskRequest.task_id
@@ -91,9 +92,10 @@ async function updateState(
         await createTaskAssignments(taskRequests, taskId, allMembers)
       } else {
         await taskRequestPusher.notifyAfterUpdatingState(
+          allMembers,
           taskRequestId,
           newState,
-          allMembers.filter((member) => member.id !== req.account.id)
+          req.account
         )
       }
     } catch (err) {

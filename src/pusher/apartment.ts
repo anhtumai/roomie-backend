@@ -3,19 +3,21 @@ import logger from '../util/logger'
 
 export async function notifyAfterLeaving(
   memberIds: number[],
-  leaverUsername: string,
+  leaver: {
+    id: number
+    username: string
+  },
   currentAdminUsername: string
 ): Promise<void> {
   try {
-    await pusher.trigger(
-      memberIds.map((memberId) => makeChannel(memberId)),
-      pusherConstant.APARTMENT_EVENT,
-      {
-        state: pusherConstant.LEAVE_STATE,
-        leaver: leaverUsername,
-        admin: currentAdminUsername,
-      }
-    )
+    const notifiedChannels = memberIds
+      .filter((memberId) => memberId !== leaver.id)
+      .map((memberId) => makeChannel(memberId))
+    await pusher.trigger(notifiedChannels, pusherConstant.APARTMENT_EVENT, {
+      state: pusherConstant.LEAVE_STATE,
+      leaver: leaver.username,
+      admin: currentAdminUsername,
+    })
   } catch (err) {
     logger.error(err)
   }
@@ -23,17 +25,19 @@ export async function notifyAfterLeaving(
 
 export async function notifyAfterRemovingMember(
   memberIds: number[],
-  removedMemberUsername: string
+  removedMemberUsername: string,
+  remover: {
+    id: number
+  }
 ): Promise<void> {
   try {
-    await pusher.trigger(
-      memberIds.map((memberId) => makeChannel(memberId)),
-      pusherConstant.APARTMENT_EVENT,
-      {
-        state: pusherConstant.MEMBER_REMOVED_STATE,
-        removedMember: removedMemberUsername,
-      }
-    )
+    const notifiedChannels = memberIds
+      .filter((memberId) => memberId !== remover.id)
+      .map((memberId) => makeChannel(memberId))
+    await pusher.trigger(notifiedChannels, pusherConstant.APARTMENT_EVENT, {
+      state: pusherConstant.MEMBER_REMOVED_STATE,
+      removedMember: removedMemberUsername,
+    })
   } catch (err) {
     logger.error(err)
   }
@@ -41,17 +45,19 @@ export async function notifyAfterRemovingMember(
 
 export async function notifyAfterUpdating(
   memberIds: number[],
-  apartmentName: string
+  apartmentName: string,
+  updater: {
+    id: number
+  }
 ): Promise<void> {
   try {
-    await pusher.trigger(
-      memberIds.map((memberId) => makeChannel(memberId)),
-      pusherConstant.APARTMENT_EVENT,
-      {
-        state: pusherConstant.EDITED_STATE,
-        apartmentName: apartmentName,
-      }
-    )
+    const notifiedChannels = memberIds
+      .filter((memberId) => memberId !== updater.id)
+      .map((memberId) => makeChannel(memberId))
+    await pusher.trigger(notifiedChannels, pusherConstant.APARTMENT_EVENT, {
+      state: pusherConstant.EDITED_STATE,
+      apartmentName: apartmentName,
+    })
   } catch (err) {
     logger.error(err)
   }

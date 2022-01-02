@@ -140,9 +140,9 @@ async function accept(
     ).filter((i) => i.id !== invitation.id)
 
     await invitationPusher.notifyAfterAccepting(
-      invitation.apartment,
       invitation.invitor.username,
       req.account.username,
+      invitation.apartment,
       toRejectInvitations
     )
   } catch (err) {
