@@ -4,7 +4,6 @@ import { TaskRequest } from '@prisma/client'
 import _ from 'lodash'
 
 import taskRequestModel, { changeTaskRequestsToAssignments } from '../models/taskRequest'
-import taskAssignmentModel from '../models/taskAssignment'
 import taskModel from '../models/task'
 import accountModel, { Profile } from '../models/account'
 
