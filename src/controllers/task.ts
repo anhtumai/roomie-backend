@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
+import Joi from 'joi'
 
 import _ from 'lodash'
 
@@ -15,21 +16,24 @@ import processClientError from '../util/error'
 
 import { Prisma } from '@prisma/client'
 
-function validateTaskProperty(taskProperty: any): boolean {
-  const { name, description, frequency, difficulty, start, end } = taskProperty
-  if (typeof name !== 'string') return false
-  if (typeof description !== 'string') return false
-  if (typeof frequency !== 'number') return false
-  if (typeof difficulty !== 'number') return false
-  if (isNaN(Date.parse(start))) return false
-  if (isNaN(Date.parse(end))) return false
-  return true
+function validateTaskProperty(taskProperty: any): Joi.ValidationError | undefined {
+  const schema = Joi.object({
+    name: Joi.string().min(5).max(33).required(),
+    description: Joi.string().required(),
+    frequency: Joi.number().min(1).required(),
+    difficulty: Joi.number().min(0).max(10).required(),
+    start: Joi.date().required(),
+    end: Joi.date().required(),
+    assignees: Joi.array().items(Joi.string()).optional(),
+  })
+  const validationResult = schema.validate(taskProperty)
+  return validationResult.error
 }
 
 export function taskPropertyValidator(req: Request, res: Response, next: NextFunction): void {
-  if (!validateTaskProperty(req.body)) {
-    const errorMessage = 'Invalid body'
-    return processClientError(res, 400, errorMessage)
+  const error = validateTaskProperty(req.body)
+  if (error) {
+    return processClientError(res, 400, error.message)
   }
   next()
 }
@@ -204,10 +208,6 @@ async function update(
 ): Promise<void> {
   const taskId = Number(req.params.id)
 
-  if (!validateTaskProperty(req.body)) {
-    const errorMessage = 'Invalid body'
-    return processClientError(res, 400, errorMessage)
-  }
   const newTaskProperty = parseTaskProperty(req.body)
 
   try {
