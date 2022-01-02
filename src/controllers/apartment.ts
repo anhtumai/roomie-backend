@@ -205,6 +205,7 @@ async function leave(req: RequestAfterExtractor, res: Response, next: NextFuncti
     currentAdminUsername = displayApartment.admin.username
     const memberIds = displayApartment.members.map((member) => member.id)
 
+    // mutation
     await apartmentHelper.cleanTaskRequests(memberIds, req.account.id)
     await apartmentHelper.cleanTaskAssignments(memberIds, req.account.id)
 
