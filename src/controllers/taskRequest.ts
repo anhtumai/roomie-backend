@@ -3,7 +3,7 @@ import { TaskRequest } from '@prisma/client'
 
 import _ from 'lodash'
 
-import taskRequestModel from '../models/taskRequest'
+import taskRequestModel, { changeTaskRequestsToAssignments } from '../models/taskRequest'
 import taskAssignmentModel from '../models/taskAssignment'
 import taskModel from '../models/task'
 import accountModel, { Profile } from '../models/account'
@@ -25,8 +25,7 @@ async function createTaskAssignments(
     order: i,
   }))
 
-  await taskAssignmentModel.createMany(assignmentCreateData)
-  await taskRequestModel.deleteMany({ task_id: taskId })
+  await changeTaskRequestsToAssignments(taskRequests, taskId)
 
   const task = await taskModel.find({ id: taskId })
   const assigneeUsernames = assignmentCreateData.map(({ assignee_id }) => {

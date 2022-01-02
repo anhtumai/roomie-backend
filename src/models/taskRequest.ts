@@ -1,4 +1,7 @@
 import { TaskRequest, Prisma, Task, RequestType } from '@prisma/client'
+
+import _ from 'lodash'
+
 import { Profile } from './account'
 
 import { prisma } from './client'
@@ -217,6 +220,29 @@ async function deleteAll(): Promise<number> {
   const count = await deleteMany({})
   return count
 }
+
+export async function changeTaskRequestsToAssignments(
+  taskRequests: TaskRequest[],
+  taskId: number
+): Promise<void> {
+  const assignmentCreateData = _.sortBy(taskRequests, ['assignee_id']).map((request, i) => ({
+    task_id: taskId,
+    assignee_id: request.assignee_id,
+    order: i,
+  }))
+
+  await prisma.$transaction([
+    prisma.taskRequest.deleteMany({
+      where: {
+        task_id: taskId,
+      },
+    }),
+    prisma.taskAssignment.createMany({
+      data: assignmentCreateData,
+    }),
+  ])
+}
+
 export default {
   findMany,
   findJoinTaskRequests,
