@@ -87,7 +87,7 @@ async function login(req: Request, res: Response, next: NextFunction): Promise<v
     }
 
     const token = jwt.sign(accountForToken, process.env.SECRET, {
-      expiresIn: 3 * 60 * 60,
+      expiresIn: 30 * 24 * 60 * 60,
     })
 
     const decodedToken = jwt_decode(token)
